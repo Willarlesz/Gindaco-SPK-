@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Sales Forecasting - GINDACO Mall Artha Gading</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/custom.css">
+    <style>
+        .row-overridden {
+            background-color: #fefce8 !important;
+            border-left: 4px solid #eab308 !important;
+        }
+        .row-overridden .final-badge {
+            background-color: #fef08a !important;
+            color: #854d0e !important;
+            border: 1px solid #facc15 !important;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <!-- NAVBAR CONTAINER -->
+    <div id="navbar-container"></div>
+
+    <div class="container-fluid px-lg-4 py-4">
+
+        <!-- KOP SURAT PRINT RESMI -->
+        <div id="print-header-container"></div>
+
+        <!-- PAGE HEADER -->
+        <div class="page-header-box">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1 small">
+                        <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none text-muted">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="smoothing.html" class="text-decoration-none text-muted">Exponential Smoothing</a></li>
+                        <li class="breadcrumb-item active text-danger fw-semibold" aria-current="page">Weekly Sales Forecast</li>
+                    </ol>
+                </nav>
+                <h1 class="page-header-title">
+                    <i class="fas fa-calendar-week text-danger"></i> Weekly Sales Forecasting with Exponential Smoothing
+                </h1>
+                <p class="page-header-desc">
+                    Unggah 2 dataset penjualan POS/ERP mingguan, terapkan rumus Single Exponential Smoothing secara reaktif, dan sesuaikan angka dengan koreksi manual secara fleksibel.
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <button onclick="window.print()" class="btn btn-soft">
+                    <i class="fas fa-print me-1"></i> Cetak Laporan
+                </button>
+                <a href="rekomendasi.html" class="btn btn-gindaco fw-bold">
+                    <i class="fas fa-clipboard-check me-1"></i> Rekomendasi SPK Bahan Baku
+                </a>
+                <a href="smoothing.html" class="btn btn-outline-danger">
+                    <i class="fas fa-calculator me-1"></i> Smoothing Bulanan
+                </a>
+            </div>
+        </div>
+
+        <!-- NOTIFIKASI TOAST / ALERT STATUS -->
+        <div id="statusAlertContainer"></div>
+
+        <!-- CARD FORM UPLOAD 2 FILE CSV & PARAMETER -->
+        <div class="modern-card mb-4 no-print">
+            <div class="modern-card-header d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-dark">
+                    <i class="fas fa-upload text-danger me-2"></i>Unggah Dataset Penjualan POS &amp; Parameter Peramalan
+                </h5>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadSampleDatasets()">
+                        <i class="fas fa-flask me-1"></i> Muat Sampel Demo CSV
+                    </button>
+                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 align-self-center">Client-Side Parser</span>
+                </div>
+            </div>
+            <div class="modern-card-body p-4">
+                <form id="weeklyForecastForm" onsubmit="event.preventDefault(); processAndMergeDatasets();">
+                    <div class="row g-4">
+                        <!-- File Minggu 1 -->
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded-3 border h-100">
+                                <label class="form-label fw-bold text-dark small text-uppercase d-flex align-items-center justify-content-between">
+                                    <span><i class="fas fa-file-csv text-primary me-1"></i> File 1: Aktual Minggu Lalu (F<sub>t</sub> / Baseline)</span>
+                                    <span class="badge bg-primary">Dataset Historis</span>
+                                </label>
+                                <input type="file" id="fileWeek1Input" class="form-control mb-2" accept=".csv,text/csv,text/plain">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted small" style="font-size: 0.75rem;">Total kuantitas barang minggu lalu.</span>
+                                    <span class="small fw-semibold text-primary" id="statusFile1">Belum dipilih</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- File Minggu 2 -->
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded-3 border h-100">
+                                <label class="form-label fw-bold text-dark small text-uppercase d-flex align-items-center justify-content-between">
+                                    <span><i class="fas fa-file-csv text-success me-1"></i> File 2: Aktual Minggu Sekarang (A<sub>t</sub> / Riil Terbaru)</span>
+                                    <span class="badge bg-success">Dataset Aktual</span>
+                                </label>
+                                <input type="file" id="fileWeek2Input" class="form-control mb-2" accept=".csv,text/csv,text/plain">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted small" style="font-size: 0.75rem;">Total kuantitas barang minggu sekarang.</span>
+                                    <span class="small fw-semibold text-success" id="statusFile2">Belum dipilih</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Parameter Alpha -->
+                        <div class="col-lg-6">
+                            <label class="form-label fw-bold text-dark small text-uppercase d-flex justify-content-between">
+                                <span>Bobot Smoothing Factor (&alpha; / Alpha)</span>
+                                <span class="badge bg-danger font-monospace fs-6" id="alphaBadge">&alpha; = 0.30</span>
+                            </label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="range" class="form-range" id="alphaRange" min="0.1" max="0.9" step="0.05" value="0.3" oninput="onAlphaChange(this.value)">
+                                <input type="number" step="0.01" min="0.1" max="0.9" class="form-control text-center fw-bold font-monospace" style="width: 100px;" id="alphaInput" value="0.30" oninput="onAlphaChange(this.value)">
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                <span class="text-muted small align-self-center me-1">Preset:</span>
+                                <button type="button" class="btn btn-xs btn-soft rounded-pill" onclick="onAlphaChange(0.2)">&alpha; = 0.2 (Halus)</button>
+                                <button type="button" class="btn btn-xs btn-outline-danger rounded-pill fw-bold" onclick="onAlphaChange(0.3)">&alpha; = 0.3 (Standar Gindaco)</button>
+                                <button type="button" class="btn btn-xs btn-soft rounded-pill" onclick="onAlphaChange(0.5)">&alpha; = 0.5 (Seimbang)</button>
+                                <button type="button" class="btn btn-xs btn-soft rounded-pill" onclick="onAlphaChange(0.7)">&alpha; = 0.7 (Responsif)</button>
+                            </div>
+                        </div>
+
+                        <!-- Info Formula & Aturan Void -->
+                        <div class="col-lg-6">
+                            <div class="p-3 bg-white rounded-3 border h-100">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <strong class="small text-dark"><i class="fas fa-filter text-danger me-1"></i>Aturan Pembersihan &amp; Rumus:</strong>
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Filter Void: True Diabaikan</span>
+                                </div>
+                                <div class="text-muted small" style="font-size: 0.75rem; line-height: 1.45;">
+                                    &bull; Kolom Wajib: <code>article_code</code>, <code>quantity</code>.<br>
+                                    &bull; Kolom Opsional: <code>article_name</code>, <code>void</code>, <code>created_date</code>.<br>
+                                    &bull; Formula Baku: <span class="fw-bold font-monospace text-danger">F<sub>t+1</sub> = (&alpha; &middot; A<sub>t</sub>) + ((1 - &alpha;) &middot; F<sub>t</sub>)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+                        <span class="text-muted small" id="reactiveStatusText">
+                            <i class="fas fa-bolt text-warning me-1"></i> Sistem otomatis memproses data begitu kedua file CSV dipilih.
+                        </span>
+                        <button type="button" class="btn btn-gindaco px-4 py-2 fw-bold shadow-sm" onclick="processAndMergeDatasets()">
+                            <i class="fas fa-arrows-rotate me-1"></i> Proses &amp; Hitung Forecasting
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- AREA HASIL: SUMMARY CARDS & TABEL INTERAKTIF -->
+        <div id="forecastResultsContainer" style="display: none;">
+
+            <!-- SINKRONISASI RECIPE EXPLOSION KE SPK BANNER -->
+            <div id="spkSyncStatusBanner" style="display: none;"></div>
+
+            <!-- 4 SUMMARY CARDS -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card stat-primary py-3">
+                        <div>
+                            <p class="stat-label mb-1">Total Item Terproses</p>
+                            <h4 class="stat-value mb-0 fs-3"><span id="sumTotalItems">0</span> <span class="fs-6 fw-normal text-muted">Item</span></h4>
+                        </div>
+                        <div class="stat-icon-wrapper">
+                            <i class="fas fa-boxes-stacked text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card stat-secondary py-3">
+                        <div>
+                            <p class="stat-label mb-1">Total Quantity Minggu Lalu</p>
+                            <h4 class="stat-value mb-0 fs-3"><span id="sumQtyW1">0</span> <span class="fs-6 fw-normal text-muted">Pcs</span></h4>
+                        </div>
+                        <div class="stat-icon-wrapper">
+                            <i class="fas fa-calendar-minus text-secondary"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card stat-success py-3">
+                        <div>
+                            <p class="stat-label mb-1">Total Quantity Minggu Sekarang</p>
+                            <h4 class="stat-value mb-0 fs-3"><span id="sumQtyW2">0</span> <span class="fs-6 fw-normal text-muted">Pcs</span></h4>
+                        </div>
+                        <div class="stat-icon-wrapper">
+                            <i class="fas fa-chart-line text-success"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card stat-warning py-3">
+                        <div>
+                            <p class="stat-label mb-1">Total Estimasi Minggu Depan</p>
+                            <h4 class="stat-value mb-0 fs-3 text-dark"><span id="sumFinalForecast">0</span> <span class="fs-6 fw-normal text-muted">Pcs</span></h4>
+                        </div>
+                        <div class="stat-icon-wrapper">
+                            <i class="fas fa-calculator text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MAIN TABLE CARD -->
+            <div class="modern-card mb-4">
+                <div class="modern-card-header flex-column flex-md-row gap-3">
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">
+                            <i class="fas fa-table text-success me-2"></i>Tabel Hasil Peramalan Penjualan &amp; Koreksi Manual
+                        </h5>
+                        <span class="text-muted small" id="tableItemCountText">Menampilkan 0 item barang</span>
+                    </div>
+
+                    <div class="d-flex flex-wrap align-items-center gap-2 no-print">
+                        <div class="input-group input-group-sm" style="max-width: 250px;">
+                            <span class="input-group-text bg-light text-muted"><i class="fas fa-search"></i></span>
+                            <input type="text" id="searchTableInput" class="form-control bg-light" placeholder="Cari kode / nama barang...">
+                        </div>
+
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetAllOverrides()" title="Kembalikan semua angka ke perhitungan sistem asli">
+                            <i class="fas fa-rotate-left me-1"></i> Reset Koreksi
+                        </button>
+
+                        <button type="button" class="btn btn-sm btn-success fw-bold" onclick="exportToCSV()" title="Unduh tabel hasil ke format CSV">
+                            <i class="fas fa-file-excel me-1"></i> Export to CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-modern table-hover align-middle mb-0" id="weeklyForecastTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">No</th>
+                                <th style="width: 140px;">Kode Barang</th>
+                                <th>Nama Barang</th>
+                                <th style="width: 150px;" class="text-end">Aktual Minggu Lalu (F<sub>t</sub>)</th>
+                                <th style="width: 160px;" class="text-end">Aktual Minggu Sekarang (A<sub>t</sub>)</th>
+                                <th style="width: 160px;" class="text-end">Forecast Sistem</th>
+                                <th style="width: 170px;" class="text-center no-print">Koreksi Manual</th>
+                                <th style="width: 150px;" class="text-end">Final Forecast</th>
+                            </tr>
+                        </thead>
+                        <tbody id="forecastTableBody">
+                            <!-- Diisi secara dinamis oleh JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- EMPTY PLACEHOLDER STATE -->
+        <div class="modern-card p-5 text-center my-4" id="emptyPlaceholderCard">
+            <div class="brand-icon mx-auto mb-3" style="width: 64px; height: 64px; font-size: 1.8rem; background: #fee2e2; color: #dc2626;">
+                <i class="fas fa-file-csv"></i>
+            </div>
+            <h5 class="fw-bold text-dark mb-2">Belum Ada Dataset Penjualan yang Dimuat</h5>
+            <p class="text-muted small mx-auto mb-3" style="max-width: 500px;">
+                Silakan pilih dua file CSV laporan penjualan mingguan POS Anda di atas untuk memulai kalkulasi otomatis Single Exponential Smoothing, atau klik tombol demo di bawah.
+            </p>
+            <div>
+                <button type="button" class="btn btn-outline-danger btn-sm px-3" onclick="loadSampleDatasets()">
+                    <i class="fas fa-flask me-1"></i> Muat Sampel Demo CSV (Week 1 & 2)
+                </button>
+            </div>
+        </div>
+
+        <!-- FOOTER PRINT RESMI -->
+        <div id="print-footer-container"></div>
+
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- App Seed & DB Engine -->
+    <script src="assets/js/seed_data.js"></script>
+    <script src="assets/js/db.js"></script>
+    <script src="assets/js/components.js"></script>
+
+    <script>
+    let appForecastData = []; // [{ code, name, w1, w2, sysForecast, manualOverride }]
+    let currentAlpha = 0.3;
+    let file1ParsedData = null; // { data: { [code]: { code, name, qty } } }
+    let file2ParsedData = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        Components.renderNavbar('weekly_forecast');
+        Components.renderPrintHeader('print-header-container', 'Laporan Peramalan Penjualan Mingguan (Weekly Sales Forecasting)', 'Metode Single Exponential Smoothing &bull; Outlet Mall Artha Gading &bull; ' + new Date().toLocaleDateString('id-ID'));
+        Components.renderPrintFooter('print-footer-container');
+
+        // File listener File 1
+        const file1Input = document.getElementById('fileWeek1Input');
+        const file2Input = document.getElementById('fileWeek2Input');
+        const statusFile1 = document.getElementById('statusFile1');
+        const statusFile2 = document.getElementById('statusFile2');
+        const reactiveStatus = document.getElementById('reactiveStatusText');
+
+        file1Input.addEventListener('change', async function() {
+            if (!this.files || this.files.length === 0) return;
+            const file = this.files[0];
+            statusFile1.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>Membaca...`;
+            try {
+                const text = await readFileAsText(file);
+                file1ParsedData = parseWeeklyCSVClient(text, file.name);
+                statusFile1.innerHTML = `<i class="fas fa-check-circle text-success me-1"></i>${file1ParsedData.uniqueItemCount} item`;
+                if (file2ParsedData) {
+                    processAndMergeDatasets();
+                } else {
+                    reactiveStatus.innerHTML = `<i class="fas fa-info-circle text-info me-1"></i>File 1 selesai dimuat (${file1ParsedData.uniqueItemCount} item). Silakan pilih File 2.`;
+                }
+            } catch (err) {
+                statusFile1.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle"></i> Error</span>`;
+                showAppAlert(err.message, 'danger');
+            }
+        });
+
+        file2Input.addEventListener('change', async function() {
+            if (!this.files || this.files.length === 0) return;
+            const file = this.files[0];
+            statusFile2.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>Membaca...`;
+            try {
+                const text = await readFileAsText(file);
+                file2ParsedData = parseWeeklyCSVClient(text, file.name);
+                statusFile2.innerHTML = `<i class="fas fa-check-circle text-success me-1"></i>${file2ParsedData.uniqueItemCount} item`;
+                if (file1ParsedData) {
+                    processAndMergeDatasets();
+                } else {
+                    reactiveStatus.innerHTML = `<i class="fas fa-info-circle text-info me-1"></i>File 2 selesai dimuat (${file2ParsedData.uniqueItemCount} item). Silakan pilih File 1.`;
+                }
+            } catch (err) {
+                statusFile2.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle"></i> Error</span>`;
+                showAppAlert(err.message, 'danger');
+            }
+        });
+
+        // Search filter
+        const searchInput = document.getElementById('searchTableInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase().trim();
+                const rows = document.querySelectorAll('#forecastTableBody tr');
+                let count = 0;
+                rows.forEach(r => {
+                    if (r.innerText.toLowerCase().includes(query)) {
+                        r.style.display = '';
+                        count++;
+                    } else {
+                        r.style.display = 'none';
+                    }
+                });
+                document.getElementById('tableItemCountText').innerText = `Menampilkan ${count} dari ${appForecastData.length} item barang`;
+            });
+        }
+    });
+
+    function onAlphaChange(val) {
+        currentAlpha = parseFloat(val);
+        document.getElementById('alphaRange').value = currentAlpha;
+        document.getElementById('alphaInput').value = currentAlpha.toFixed(2);
+        document.getElementById('alphaBadge').innerText = 'α = ' + currentAlpha.toFixed(2);
+
+        if (appForecastData.length > 0) {
+            recalculateForecasts();
+            renderForecastTable();
+            if (file1ParsedData && file2ParsedData) {
+                syncSalesToSPKMaterials(file1ParsedData.data, file2ParsedData.data);
+            }
+        }
+    }
+
+    function showAppAlert(message, type = 'danger') {
+        const container = document.getElementById('statusAlertContainer');
+        container.innerHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show shadow-sm mb-4" role="alert">
+                <i class="fas ${type === 'danger' ? 'fa-circle-exclamation' : 'fa-circle-check'} me-2 fs-5"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+    }
+
+    function detectDelim(text) {
+        const firstLine = text.split(/\r\n|\n/)[0] || '';
+        const commas = (firstLine.match(/,/g) || []).length;
+        const semis = (firstLine.match(/;/g) || []).length;
+        const tabs = (firstLine.match(/\t/g) || []).length;
+        if (semis > commas && semis > tabs) return ';';
+        if (tabs > commas && tabs > semis) return '\t';
+        return ',';
+    }
+
+    function parseCSVLine(line, delim) {
+        const result = [];
+        let cur = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') {
+                if (inQuotes && line[i + 1] === '"') {
+                    cur += '"';
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (ch === delim && !inQuotes) {
+                result.push(cur);
+                cur = '';
+            } else {
+                cur += ch;
+            }
+        }
+        result.push(cur);
+        return result;
+    }
+
+    function parseWeeklyCSVClient(csvText, fileName) {
+        if (!csvText || !csvText.trim()) throw new Error(`File ${fileName} kosong.`);
+        const delim = detectDelim(csvText);
+        const lines = csvText.split(/\r\n|\n/).filter(l => l.trim().length > 0);
+        if (lines.length < 2) throw new Error(`File ${fileName} tidak memiliki baris data setelah header.`);
+
+        const header = parseCSVLine(lines[0], delim).map(h => h.trim().toLowerCase().replace(/["'\uFEFF]/g, ''));
+        const colCode = header.findIndex(h => ['article_code', 'item_code', 'kode_artikel', 'kode_barang', 'kode_menu', 'code', 'plu', 'articlecode'].includes(h));
+        const colName = header.findIndex(h => ['article_name', 'item_name', 'nama_artikel', 'nama_barang', 'nama_menu', 'name', 'description', 'articlename'].includes(h));
+        const colQty = header.findIndex(h => ['quantity', 'qty', 'jumlah', 'jumlah_terjual', 'qty_sold', 'sales_qty'].includes(h));
+        const colVoid = header.findIndex(h => ['void', 'is_void', 'status_void', 'isvoid'].includes(h));
+
+        if (colCode === -1 || colQty === -1) {
+            throw new Error(`File ${fileName}: Kolom 'article_code' dan 'quantity' wajib ada.`);
+        }
+
+        const aggregated = {};
+        let totalRows = 0;
+        let voidRowsIgnored = 0;
+
+        for (let i = 1; i < lines.length; i++) {
+            const row = parseCSVLine(lines[i], delim);
+            if (row.length <= Math.max(colCode, colQty)) continue;
+            totalRows++;
+
+            if (colVoid !== -1) {
+                const vVal = (row[colVoid] || '').trim().toLowerCase();
+                if (['true', '1', 't', 'yes', 'y'].includes(vVal)) {
+                    voidRowsIgnored++;
+                    continue;
+                }
+            }
+
+            const code = (row[colCode] || '').trim();
+            if (!code) continue;
+
+            const name = (colName !== -1 && row[colName]) ? row[colName].trim() : code;
+            const qtyRaw = (row[colQty] || '0').trim().replace(/,/g, '.');
+            const qty = parseFloat(qtyRaw) || 0;
+
+            if (!aggregated[code]) {
+                aggregated[code] = { code, name, qty: 0 };
+            }
+            aggregated[code].qty += qty;
+            if (name && name.length > aggregated[code].name.length) {
+                aggregated[code].name = name;
+            }
+        }
+
+        return {
+            data: aggregated,
+            totalRows,
+            voidRowsIgnored,
+            uniqueItemCount: Object.keys(aggregated).length
+        };
+    }
+
+    function readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result);
+            reader.onerror = e => reject(new Error('Gagal membaca file: ' + file.name));
+            reader.readAsText(file);
+        });
+    }
+
+    function processAndMergeDatasets() {
+        if (!file1ParsedData || !file2ParsedData) return;
+
+        const dataW1 = file1ParsedData.data;
+        const dataW2 = file2ParsedData.data;
+        const allCodes = Array.from(new Set([...Object.keys(dataW1), ...Object.keys(dataW2)])).sort();
+
+        appForecastData = allCodes.map(code => {
+            const name = (dataW2[code] && dataW2[code].name) || (dataW1[code] && dataW1[code].name) || code;
+            const w1 = dataW1[code] ? dataW1[code].qty : 0;
+            const w2 = dataW2[code] ? dataW2[code].qty : 0;
+            const rawF = (currentAlpha * w2) + ((1.0 - currentAlpha) * w1);
+            return {
+                code,
+                name,
+                w1,
+                w2,
+                sysForecast: Math.round(rawF),
+                manualOverride: null
+            };
+        });
+
+        renderForecastTable();
+
+        document.getElementById('forecastResultsContainer').style.display = 'block';
+        document.getElementById('emptyPlaceholderCard').style.display = 'none';
+
+        showAppAlert(`Berhasil menggabungkan dataset penjualan: <strong>${appForecastData.length} menu</strong> terhitung menggunakan Single Exponential Smoothing (&alpha; = ${currentAlpha.toFixed(2)}).`, 'success');
+
+        // Pure Client-Side Recipe Explosion to SPK Materials
+        syncSalesToSPKMaterials(dataW1, dataW2);
+    }
+
+    function syncSalesToSPKMaterials(dataW1, dataW2) {
+        const banner = document.getElementById('spkSyncStatusBanner');
+        if (!banner) return;
+
+        banner.style.display = 'flex';
+        banner.className = 'alert alert-info py-2 px-3 small rounded-3 mb-3 d-flex align-items-center justify-content-between';
+        banner.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Mengonversi menu penjualan ke kebutuhan Bahan Baku via BOM Recipe Explosion...`;
+
+        setTimeout(() => {
+            try {
+                const spkState = GindacoDB.processWeeklySPK(dataW1, dataW2, currentAlpha, 'days', 1.0);
+                banner.className = 'alert alert-success py-2 px-3 small rounded-3 mb-3 d-flex align-items-center justify-content-between';
+                banner.innerHTML = `
+                    <div>
+                        <i class="fas fa-check-circle text-success me-1"></i>
+                        <strong>Recipe Explosion Berhasil:</strong> ${spkState.materials.length} Bahan Baku telah diperbarui untuk pesanan SPK Mingguan.
+                    </div>
+                    <a href="rekomendasi.html" class="btn btn-sm btn-gindaco fw-bold px-3 py-1">
+                        <i class="fas fa-clipboard-check me-1"></i> Buka Rekomendasi SPK Bahan Baku &rarr;
+                    </a>
+                `;
+            } catch (e) {
+                console.error(e);
+                banner.className = 'alert alert-danger py-2 px-3 small rounded-3 mb-3';
+                banner.innerHTML = `Gagal menjalankan Recipe Explosion: ${e.message}`;
+            }
+        }, 150);
+    }
+
+    function recalculateForecasts() {
+        appForecastData.forEach(item => {
+            const rawF = (currentAlpha * item.w2) + ((1.0 - currentAlpha) * item.w1);
+            item.sysForecast = Math.round(rawF);
+        });
+    }
+
+    function renderForecastTable() {
+        const tbody = document.getElementById('forecastTableBody');
+        tbody.innerHTML = '';
+
+        let sumW1 = 0;
+        let sumW2 = 0;
+        let sumFinal = 0;
+
+        appForecastData.forEach((item, idx) => {
+            sumW1 += item.w1;
+            sumW2 += item.w2;
+
+            const isOverridden = item.manualOverride !== null && !isNaN(item.manualOverride);
+            const finalVal = isOverridden ? item.manualOverride : item.sysForecast;
+            sumFinal += finalVal;
+
+            const tr = document.createElement('tr');
+            tr.id = `row-${idx}`;
+            if (isOverridden) tr.classList.add('row-overridden');
+
+            tr.innerHTML = `
+                <td class="text-muted fw-semibold">${idx + 1}</td>
+                <td><span class="badge bg-light text-dark border font-monospace">${item.code}</span></td>
+                <td><strong class="text-dark">${item.name}</strong></td>
+                <td class="text-end font-monospace text-muted">${item.w1.toLocaleString('id-ID')}</td>
+                <td class="text-end font-monospace text-secondary fw-semibold">${item.w2.toLocaleString('id-ID')}</td>
+                <td class="text-end"><span class="badge bg-light text-primary border font-monospace fs-6">${item.sysForecast.toLocaleString('id-ID')}</span></td>
+                <td class="text-center no-print">
+                    <input type="number" step="1" min="0" class="form-control form-control-sm text-center font-monospace fw-bold override-input" 
+                           style="max-width: 120px; margin: 0 auto;" placeholder="Auto" 
+                           value="${isOverridden ? item.manualOverride : ''}" 
+                           oninput="onManualOverrideInput(this, ${idx})">
+                </td>
+                <td class="text-end">
+                    <span class="badge-pill-custom badge-subtle-success fs-6 fw-bold final-badge" id="final-badge-${idx}">
+                        <i class="fas fa-boxes-packing me-1"></i><span id="final-txt-${idx}">${finalVal.toLocaleString('id-ID')}</span>
+                    </span>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('sumTotalItems').innerText = appForecastData.length.toLocaleString('id-ID');
+        document.getElementById('sumQtyW1').innerText = sumW1.toLocaleString('id-ID');
+        document.getElementById('sumQtyW2').innerText = sumW2.toLocaleString('id-ID');
+        document.getElementById('sumFinalForecast').innerText = sumFinal.toLocaleString('id-ID');
+        document.getElementById('tableItemCountText').innerText = `Menampilkan ${appForecastData.length} item barang (α = ${currentAlpha.toFixed(2)})`;
+    }
+
+    function onManualOverrideInput(inputEl, idx) {
+        const rawVal = inputEl.value.trim();
+        const rowEl = document.getElementById(`row-${idx}`);
+        const finalTxtEl = document.getElementById(`final-txt-${idx}`);
+
+        if (rawVal !== '' && !isNaN(rawVal)) {
+            const val = Math.max(0, parseInt(rawVal, 10));
+            appForecastData[idx].manualOverride = val;
+            finalTxtEl.innerText = val.toLocaleString('id-ID');
+            rowEl.classList.add('row-overridden');
+        } else {
+            appForecastData[idx].manualOverride = null;
+            finalTxtEl.innerText = appForecastData[idx].sysForecast.toLocaleString('id-ID');
+            rowEl.classList.remove('row-overridden');
+        }
+
+        let totalFinal = 0;
+        appForecastData.forEach(item => {
+            totalFinal += (item.manualOverride !== null) ? item.manualOverride : item.sysForecast;
+        });
+        document.getElementById('sumFinalForecast').innerText = totalFinal.toLocaleString('id-ID');
+    }
+
+    function resetAllOverrides() {
+        appForecastData.forEach((item, idx) => {
+            item.manualOverride = null;
+            const rowEl = document.getElementById(`row-${idx}`);
+            const inputEl = rowEl ? rowEl.querySelector('.override-input') : null;
+            const finalTxtEl = document.getElementById(`final-txt-${idx}`);
+            if (inputEl) inputEl.value = '';
+            if (finalTxtEl) finalTxtEl.innerText = item.sysForecast.toLocaleString('id-ID');
+            if (rowEl) rowEl.classList.remove('row-overridden');
+        });
+
+        let totalFinal = 0;
+        appForecastData.forEach(item => totalFinal += item.sysForecast);
+        document.getElementById('sumFinalForecast').innerText = totalFinal.toLocaleString('id-ID');
+    }
+
+    function exportToCSV() {
+        if (appForecastData.length === 0) return;
+        let csv = "data:text/csv;charset=utf-8,";
+        csv += "No,Kode Barang,Nama Barang,Aktual Minggu Lalu,Aktual Minggu Sekarang,Forecast Sistem,Koreksi Manual,Final Forecast,Status\r\n";
+        appForecastData.forEach((item, idx) => {
+            const isOver = item.manualOverride !== null;
+            const finalVal = isOver ? item.manualOverride : item.sysForecast;
+            csv += `${idx + 1},"${item.code}","${item.name}",${item.w1},${item.w2},${item.sysForecast},${isOver ? item.manualOverride : ''},${finalVal},${isOver ? 'Manual Override' : 'System'}\r\n`;
+        });
+        const link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csv));
+        link.setAttribute("download", `Weekly_Sales_Forecast_Gindaco_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Helper demo data loader from sample_week1.csv and sample_week2.csv or built-in mock
+    async function loadSampleDatasets() {
+        try {
+            document.getElementById('statusFile1').innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>Memuat sampel...`;
+            document.getElementById('statusFile2').innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>Memuat sampel...`;
+
+            const r1 = await fetch('sample_week1.csv');
+            const t1 = await r1.text();
+            const r2 = await fetch('sample_week2.csv');
+            const t2 = await r2.text();
+
+            file1ParsedData = parseWeeklyCSVClient(t1, 'sample_week1.csv');
+            file2ParsedData = parseWeeklyCSVClient(t2, 'sample_week2.csv');
+
+            document.getElementById('statusFile1').innerHTML = `<i class="fas fa-check-circle text-success me-1"></i>${file1ParsedData.uniqueItemCount} item (Demo)`;
+            document.getElementById('statusFile2').innerHTML = `<i class="fas fa-check-circle text-success me-1"></i>${file2ParsedData.uniqueItemCount} item (Demo)`;
+
+            processAndMergeDatasets();
+        } catch (e) {
+            console.error(e);
+            alert('Gagal memuat sampel CSV: ' + e.message);
+        }
+    }
+    </script>
+</body>
+</html>
+

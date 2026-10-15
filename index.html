@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard SPK Pengadaan - GINDACO Mall Artha Gading</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/custom.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+
+    <!-- NAVBAR CONTAINER -->
+    <div id="navbar-container"></div>
+
+    <div class="container-fluid px-lg-4 py-4">
+
+        <!-- HERO BANNER -->
+        <div class="hero-banner mb-4">
+            <div class="row align-items-center">
+                <div class="col-lg-8 mb-3 mb-lg-0">
+                    <div class="hero-badge">
+                        <i class="fas fa-sparkles text-warning"></i>
+                        <span>Decision Support System &bull; Gindaco Mall Artha Gading</span>
+                    </div>
+                    <h2 class="display-6 fw-bold mb-2">Selamat Datang di Portal SPK Gindaco</h2>
+                    <p class="mb-4 text-white-50 lead fs-6" style="max-width: 650px;">
+                        Optimasi pengadaan bahan baku Takoyaki & Taiyaki secara presisi menggunakan metode <strong>Single Exponential Smoothing</strong> terintegrasi langsung dengan <strong>Bill of Materials (BOM)</strong> dan <strong>Dynamic Safety Stock</strong>.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="weekly_forecast.html" class="btn btn-light fw-bold text-danger px-3 py-2 shadow-sm">
+                            <i class="fas fa-calendar-week me-1 text-danger"></i> Weekly Sales Forecast
+                        </a>
+                        <a href="rekomendasi.html" class="btn btn-outline-light fw-semibold px-3 py-2">
+                            <i class="fas fa-clipboard-check me-1"></i> Rekomendasi SPK Bahan Baku
+                        </a>
+                        <a href="bahan.html" class="btn btn-dark bg-opacity-25 border-0 text-white fw-semibold px-3 py-2">
+                            <i class="fas fa-boxes-stacked me-1"></i> Cek Stok Gudang
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="p-3 bg-white rounded-4 shadow-lg text-center mb-2 position-relative" style="z-index: 2;">
+                        <img src="assets/img/gindaco_logo.webp" alt="Gindaco Indonesia" class="img-fluid py-1 px-2" style="max-height: 48px; width: auto; object-fit: contain;">
+                        <div class="border-top pt-2 mt-2 d-flex justify-content-between align-items-center px-1">
+                            <span class="badge bg-danger text-white px-2 py-1"><i class="fas fa-location-dot me-1"></i> Mall Artha Gading</span>
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25"><i class="fas fa-circle fa-2xs me-1"></i>Outlet Aktif</span>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-white bg-opacity-10 rounded-4 backdrop-blur border border-white border-opacity-25 text-start text-white position-relative" style="z-index: 2;">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small text-white-50">Sistem Engine:</span>
+                            <span class="small fw-bold text-white"><i class="fas fa-bolt text-warning me-1"></i>Client-Side Static (Vercel/Pages)</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small text-white-50">Waktu Lokal:</span>
+                            <span class="small fw-semibold text-white" id="liveClockText"><i class="far fa-clock text-info me-1"></i>Memuat...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI STATS CARDS -->
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-xl-3">
+                <div class="stat-card stat-primary">
+                    <div>
+                        <p class="stat-label">Total Bahan Baku</p>
+                        <h3 class="stat-value" id="kpiTotalBahan">0</h3>
+                        <span class="badge badge-subtle-primary">
+                            <i class="fas fa-boxes-stacked me-1"></i>Master Inventory
+                        </span>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-boxes-stacked"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-xl-3">
+                <div class="stat-card stat-success">
+                    <div>
+                        <p class="stat-label">Menu Penjualan (BOM)</p>
+                        <h3 class="stat-value" id="kpiTotalMenu">0</h3>
+                        <span class="badge badge-subtle-success">
+                            <i class="fas fa-utensils me-1"></i>Recipe Mapping
+                        </span>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-xl-3">
+                <div class="stat-card stat-danger">
+                    <div>
+                        <p class="stat-label">Stok Kritis / Restock</p>
+                        <h3 class="stat-value" id="kpiStokKritis">0</h3>
+                        <span class="badge badge-subtle-danger">
+                            <i class="fas fa-triangle-exclamation me-1"></i>Perlu Perhatian
+                        </span>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-triangle-exclamation"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-xl-3">
+                <div class="stat-card stat-info">
+                    <div>
+                        <p class="stat-label">Riwayat Pemakaian</p>
+                        <h3 class="stat-value" id="kpiTotalHistoris">0</h3>
+                        <span class="badge badge-subtle-info">
+                            <i class="fas fa-chart-line me-1"></i>Data Historis
+                        </span>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-clock-rotate-left"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN DASHBOARD CONTENT -->
+        <div class="row g-4">
+            <!-- GRAFIK PERBANDINGAN STOK -->
+            <div class="col-xl-8">
+                <div class="modern-card h-100">
+                    <div class="modern-card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="fw-bold mb-0 text-dark">
+                                <i class="fas fa-chart-bar text-danger me-2"></i>Status Stok Bahan Baku Utama
+                            </h5>
+                            <span class="text-muted small">Perbandingan Stok Aktual Fisik vs Safety Stock Cadangan</span>
+                        </div>
+                        <a href="bahan.html" class="btn btn-sm btn-outline-danger">
+                            Kelola Bahan <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                    <div class="modern-card-body p-3">
+                        <div style="height: 320px;">
+                            <canvas id="stockComparisonChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BAHAN BAKU PERLU RESTOCK (ALERT WIDGET) -->
+            <div class="col-xl-4">
+                <div class="modern-card h-100">
+                    <div class="modern-card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="fw-bold mb-0 text-dark">
+                                <i class="fas fa-bell text-warning me-2"></i>Perhatian Restock
+                            </h5>
+                            <span class="text-muted small">Bahan dengan rasio stok paling mendesak</span>
+                        </div>
+                        <a href="rekomendasi.html" class="btn btn-sm btn-gindaco">
+                            Buat SPK
+                        </a>
+                    </div>
+                    <div class="modern-card-body p-0">
+                        <div class="list-group list-group-flush" id="kritisListGroup">
+                            <div class="p-3 text-center text-muted">Memuat data bahan kritis...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ALUR SISTEM SPK WORKFLOW CARD -->
+        <div class="modern-card mt-4">
+            <div class="p-4">
+                <h5 class="fw-bold mb-3 text-dark">
+                    <i class="fas fa-route text-danger me-2"></i>Alur Operasional Pengadaan Bahan Baku Gindaco
+                </h5>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded-3 border h-100">
+                            <div class="fw-bold text-danger mb-1"><i class="fas fa-file-csv me-1"></i> 1. Unggah CSV Penjualan</div>
+                            <p class="small text-muted mb-2">Unggah file laporan penjualan mingguan POS (Minggu Lalu & Minggu Sekarang).</p>
+                            <a href="weekly_forecast.html" class="btn btn-sm btn-outline-danger">Buka Modul &rarr;</a>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded-3 border h-100">
+                            <div class="fw-bold text-primary mb-1"><i class="fas fa-utensils me-1"></i> 2. BOM Recipe Explosion</div>
+                            <p class="small text-muted mb-2">Sistem otomatis mengonversi menu jual Takoyaki & Taiyaki ke kebutuhan gramasi bahan baku.</p>
+                            <span class="badge bg-primary-subtle text-primary">Otomatis Aktif</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded-3 border h-100">
+                            <div class="fw-bold text-warning mb-1"><i class="fas fa-shield-halved me-1"></i> 3. Dynamic Safety Stock</div>
+                            <p class="small text-muted mb-2">Cadangan buffer dihitung dinamis dari rata-rata konsumsi harian (1-2 hari buffer).</p>
+                            <a href="rekomendasi.html" class="btn btn-sm btn-outline-warning">Atur Buffer &rarr;</a>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded-3 border h-100">
+                            <div class="fw-bold text-success mb-1"><i class="fas fa-print me-1"></i> 4. Cetak Lembar SPK</div>
+                            <p class="small text-muted mb-2">Dokumen resmi SPK siap dicetak dengan kop surat, alamat store, dan tanda tangan sah.</p>
+                            <a href="laporan.html" class="btn btn-sm btn-outline-success">Cetak Laporan &rarr;</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- App Seed & DB Engine -->
+    <script src="assets/js/seed_data.js"></script>
+    <script src="assets/js/db.js"></script>
+    <script src="assets/js/components.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Render Navbar
+        Components.renderNavbar('dashboard');
+
+        // Live Clock
+        function updateClock() {
+            const now = new Date();
+            const opts = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+            const clockEl = document.getElementById('liveClockText');
+            if (clockEl) clockEl.innerHTML = `<i class="far fa-clock text-info me-1"></i>${now.toLocaleDateString('id-ID', opts)} WIB`;
+        }
+        updateClock();
+        setInterval(updateClock, 30000);
+
+        // Load Data from GindacoDB
+        const allBahan = GindacoDB.getBahanBaku();
+        const allMenus = GindacoDB.getMenus();
+        const allHistoris = GindacoDB.getHistoris();
+
+        // Count Kritis
+        const kritisItems = allBahan.filter(b => b.stok_aktual <= (b.safety_stock || 1000));
+
+        // Update KPIs
+        document.getElementById('kpiTotalBahan').innerText = allBahan.length.toLocaleString('id-ID');
+        document.getElementById('kpiTotalMenu').innerText = allMenus.length.toLocaleString('id-ID');
+        document.getElementById('kpiStokKritis').innerText = kritisItems.length.toLocaleString('id-ID');
+        document.getElementById('kpiTotalHistoris').innerText = allHistoris.length.toLocaleString('id-ID');
+
+        // Render Widget Bahan Kritis
+        const kritisContainer = document.getElementById('kritisListGroup');
+        if (kritisItems.length === 0) {
+            kritisContainer.innerHTML = `
+                <div class="p-4 text-center text-success">
+                    <i class="fas fa-circle-check fs-1 mb-2"></i>
+                    <p class="mb-0 fw-semibold">Semua stok bahan berada dalam level aman!</p>
+                </div>
+            `;
+        } else {
+            const sortedKritis = [...kritisItems].sort((a,b) => (a.stok_aktual - a.safety_stock) - (b.stok_aktual - b.safety_stock)).slice(0, 5);
+            kritisContainer.innerHTML = sortedKritis.map(b => {
+                const deficit = (b.stok_aktual - b.safety_stock);
+                return `
+                    <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                        <div>
+                            <span class="badge bg-light text-dark border font-monospace me-1">${b.kode_bahan}</span>
+                            <strong class="text-dark d-block mt-1">${b.nama_bahan}</strong>
+                            <small class="text-muted">Stok: ${b.stok_aktual.toLocaleString('id-ID')} ${b.satuan} &bull; Target: ${b.safety_stock.toLocaleString('id-ID')} ${b.satuan}</small>
+                        </div>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle fs-6 font-monospace">
+                            ${deficit <= 0 ? 'Defisit ' + Math.abs(deficit).toLocaleString('id-ID') : 'Mendekati'}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render Chart.js
+        const sampleBahan = allBahan.slice(0, 6);
+        const ctx = document.getElementById('stockComparisonChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: sampleBahan.map(b => b.nama_bahan.length > 15 ? b.nama_bahan.substring(0, 15) + '...' : b.nama_bahan),
+                datasets: [
+                    {
+                        label: 'Stok Aktual (Fisik)',
+                        data: sampleBahan.map(b => b.stok_aktual),
+                        backgroundColor: 'rgba(192, 27, 34, 0.85)',
+                        borderColor: '#c01b22',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Safety Stock',
+                        data: sampleBahan.map(b => b.safety_stock),
+                        backgroundColor: 'rgba(234, 88, 12, 0.45)',
+                        borderColor: '#ea580c',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { font: { family: 'Inter', size: 12 } }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f3f4f6' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    });
+    </script>
+</body>
+</html>
+

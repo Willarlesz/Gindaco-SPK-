@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Historis Pemakaian - GINDACO Mall Artha Gading</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/custom.css">
+</head>
+<body class="bg-light">
+
+    <!-- NAVBAR CONTAINER -->
+    <div id="navbar-container"></div>
+
+    <div class="container-fluid px-lg-4 py-4">
+
+        <!-- KOP SURAT PRINT RESMI -->
+        <div id="print-header-container"></div>
+
+        <div class="page-header-box">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1 small">
+                        <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none text-muted">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="laporan.html" class="text-decoration-none text-muted">Laporan</a></li>
+                        <li class="breadcrumb-item active text-danger fw-semibold" aria-current="page">Data Historis</li>
+                    </ol>
+                </nav>
+                <h1 class="page-header-title">
+                    <i class="fas fa-clock-rotate-left text-primary"></i> Data Historis Pemakaian Bahan Baku
+                </h1>
+                <p class="page-header-desc">
+                    Arsip data historis konsumsi bahan baku per periode bulanan sebagai baseline kalkulasi Single Exponential Smoothing.
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <button onclick="window.print()" class="btn btn-soft">
+                    <i class="fas fa-print me-1"></i> Cetak Dokumen
+                </button>
+                <a href="import_csv.html" class="btn btn-outline-danger">
+                    <i class="fas fa-file-csv me-1"></i> Import CSV Baru
+                </a>
+                <a href="smoothing.html" class="btn btn-gindaco">
+                    <i class="fas fa-calculator me-1"></i> Hitung Smoothing
+                </a>
+            </div>
+        </div>
+
+        <!-- MAIN TABLE CARD -->
+        <div class="modern-card">
+            <div class="modern-card-header flex-column flex-md-row gap-3">
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="fas fa-database text-secondary me-2"></i>Tabel Riwayat Pemakaian Bahan Riil
+                    </h5>
+                    <span class="text-muted small" id="rowCountText">Memuat riwayat historis...</span>
+                </div>
+
+                <div class="d-flex gap-2 no-print">
+                    <div class="input-group input-group-sm" style="max-width: 250px;">
+                        <span class="input-group-text bg-light text-muted"><i class="fas fa-search"></i></span>
+                        <input type="text" id="searchInput" class="form-control bg-light" placeholder="Cari periode/bahan...">
+                    </div>
+                    <button type="button" class="btn btn-sm btn-success fw-bold" onclick="exportHistorisCSV()">
+                        <i class="fas fa-file-excel me-1"></i> Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-modern table-hover align-middle mb-0" id="historisTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">No</th>
+                            <th style="width: 150px;">Periode</th>
+                            <th style="width: 140px;">Kode Bahan</th>
+                            <th>Nama Bahan Baku</th>
+                            <th style="width: 180px;" class="text-end">Pemakaian Aktual (Y<sub>t</sub>)</th>
+                            <th style="width: 110px;" class="text-center">Satuan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historisTableBody">
+                        <!-- Diisi via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- FOOTER PRINT RESMI -->
+        <div id="print-footer-container"></div>
+
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- App Seed & DB Engine -->
+    <script src="assets/js/seed_data.js"></script>
+    <script src="assets/js/db.js"></script>
+    <script src="assets/js/components.js"></script>
+
+    <script>
+    let historisList = [];
+
+    document.addEventListener("DOMContentLoaded", function() {
+        Components.renderNavbar('historis');
+        Components.renderPrintHeader('print-header-container', 'Laporan Data Historis Pemakaian Bahan Baku', 'Rekapitulasi Mutasi Pemakaian Fisik &bull; Outlet Mall Artha Gading &bull; ' + new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }));
+        Components.renderPrintFooter('print-footer-container');
+
+        loadHistorisTable();
+
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const q = this.value.toLowerCase().trim();
+                const rows = document.querySelectorAll('#historisTableBody tr');
+                let count = 0;
+                rows.forEach(r => {
+                    if (r.innerText.toLowerCase().includes(q)) {
+                        r.style.display = '';
+                        count++;
+                    } else {
+                        r.style.display = 'none';
+                    }
+                });
+                document.getElementById('rowCountText').innerText = `Menampilkan ${count} dari ${historisList.length} catatan historis`;
+            });
+        }
+    });
+
+    function loadHistorisTable() {
+        const rawHistoris = GindacoDB.getHistoris();
+        const allBahan = GindacoDB.getBahanBaku();
+        const bahanMap = {};
+        allBahan.forEach(b => bahanMap[b.id] = b);
+
+        historisList = rawHistoris.map(h => {
+            const b = bahanMap[h.id_bahan] || { kode_bahan: '-', nama_bahan: 'Bahan ID #' + h.id_bahan, satuan: 'unit' };
+            return {
+                id: h.id,
+                periode: h.periode,
+                kode_bahan: b.kode_bahan,
+                nama_bahan: b.nama_bahan,
+                satuan: b.satuan,
+                pemakaian: h.pemakaian_aktual
+            };
+        });
+
+        const tbody = document.getElementById('historisTableBody');
+        tbody.innerHTML = historisList.map((item, idx) => `
+            <tr>
+                <td class="text-muted fw-semibold">${idx + 1}</td>
+                <td><strong class="text-dark">${item.periode}</strong></td>
+                <td><span class="badge bg-light text-dark border font-monospace">${item.kode_bahan}</span></td>
+                <td>${item.nama_bahan}</td>
+                <td class="text-end font-monospace fw-bold text-primary">${item.pemakaian.toLocaleString('id-ID')}</td>
+                <td class="text-center"><span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">${item.satuan}</span></td>
+            </tr>
+        `).join('');
+
+        document.getElementById('rowCountText').innerText = `Menampilkan ${historisList.length} baris catatan historis`;
+    }
+
+    function exportHistorisCSV() {
+        if (historisList.length === 0) return;
+        let csv = "data:text/csv;charset=utf-8,No,Periode,Kode Bahan,Nama Bahan,Pemakaian Aktual,Satuan\r\n";
+        historisList.forEach((h, i) => {
+            csv += `${i + 1},"${h.periode}","${h.kode_bahan}","${h.nama_bahan}",${h.pemakaian},"${h.satuan}"\r\n`;
+        });
+        const link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csv));
+        link.setAttribute("download", `Data_Historis_Gindaco_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    </script>
+</body>
+</html>
+

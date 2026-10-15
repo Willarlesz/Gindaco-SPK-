@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Penjualan &amp; Auto BOM - GINDACO Mall Artha Gading</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/custom.css">
+</head>
+<body class="bg-light">
+
+    <!-- NAVBAR CONTAINER -->
+    <div id="navbar-container"></div>
+
+    <div class="container py-5" style="max-width: 800px;">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none text-muted">Dashboard</a></li>
+                <li class="breadcrumb-item active text-danger fw-semibold" aria-current="page">Input Penjualan</li>
+            </ol>
+        </nav>
+
+        <div id="alertBox"></div>
+
+        <div class="modern-card mb-4">
+            <div class="modern-card-header bg-light">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="brand-icon" style="width: 44px; height: 44px; font-size: 1.1rem; background: linear-gradient(135deg, #c01b22, #ea580c); color: #fff;">
+                        <i class="fas fa-cart-shopping"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">Input Transaksi Penjualan Menu</h5>
+                        <span class="text-muted small">Otomatis mengurangi stok bahan baku via Bill of Materials (BOM)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modern-card-body p-4">
+                <form id="formPenjualan" onsubmit="event.preventDefault(); submitPenjualan();">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-dark text-uppercase">Tanggal Transaksi</label>
+                            <input type="date" id="inputTanggal" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-dark text-uppercase">Jumlah Porsi Terjual</label>
+                            <input type="number" min="1" id="inputJumlah" class="form-control font-monospace fw-bold" placeholder="1" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-dark text-uppercase">Pilih Menu Takoyaki / Taiyaki</label>
+                        <select id="selectMenu" class="form-select" required>
+                            <!-- Diisi via JS -->
+                        </select>
+                    </div>
+
+                    <div class="p-3 bg-light rounded-3 border mb-4">
+                        <strong class="text-dark small d-block mb-1"><i class="fas fa-info-circle text-primary me-1"></i>Koneksi Otomatis Resep BOM:</strong>
+                        <p class="text-muted small mb-0">
+                            Setiap porsi menu yang dicatat akan langsung memotong stok bahan baku terkait (adonan takoyaki, saus, mayonaise, katsuobushi, tenkasu, dll) secara instan di LocalStorage.
+                        </p>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="index.html" class="btn btn-outline-secondary px-3">
+                            <i class="fas fa-arrow-left me-1"></i> Dashboard
+                        </a>
+                        <button type="submit" class="btn btn-gindaco px-4 fw-bold">
+                            <i class="fas fa-check me-1"></i> Simpan &amp; Potong Stok Bahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- App Seed & DB Engine -->
+    <script src="assets/js/seed_data.js"></script>
+    <script src="assets/js/db.js"></script>
+    <script src="assets/js/components.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        Components.renderNavbar('dashboard');
+
+        // Set today's date
+        document.getElementById('inputTanggal').value = new Date().toISOString().slice(0, 10);
+
+        // Populate menus
+        const menus = GindacoDB.getMenus();
+        const selectMenu = document.getElementById('selectMenu');
+        selectMenu.innerHTML = '<option value="">-- Pilih Menu Penjualan --</option>' + menus.map(m => `
+            <option value="${m.id}">${m.kode_menu} - ${m.nama_menu}</option>
+        `).join('');
+    });
+
+    function submitPenjualan() {
+        const idMenu = parseInt(document.getElementById('selectMenu').value, 10);
+        const qty = parseInt(document.getElementById('inputJumlah').value, 10);
+        const tanggal = document.getElementById('inputTanggal').value;
+
+        if (!idMenu || qty <= 0) {
+            alert('Harap pilih menu dan tentukan jumlah penjualan valid!');
+            return;
+        }
+
+        const bomRecipes = GindacoDB.getBOMRecipes();
+        const recipe = bomRecipes[idMenu] || [];
+
+        let allBahan = GindacoDB.getBahanBaku();
+        let affected = 0;
+
+        recipe.forEach(item => {
+            const kb = item.kode_bahan;
+            const deduction = (parseFloat(item.qty_dibutuhkan) || 0) * qty;
+            const bIndex = allBahan.findIndex(b => b.kode_bahan === kb);
+            if (bIndex !== -1) {
+                allBahan[bIndex].stok_aktual = Math.max(0, parseFloat((allBahan[bIndex].stok_aktual - deduction).toFixed(2)));
+                affected++;
+            }
+        });
+
+        GindacoDB.saveBahanBaku(allBahan);
+
+        document.getElementById('alertBox').innerHTML = `
+            <div class="alert alert-success d-flex align-items-center gap-3 shadow-sm border-0 mb-4" role="alert">
+                <div class="fs-3 text-success"><i class="fas fa-circle-check"></i></div>
+                <div>
+                    <h6 class="fw-bold mb-1">Transaksi Penjualan Berhasil Disimpan!</h6>
+                    <div class="small">Stok bahan baku untuk menu ini telah otomatis dikurangi sebanyak <strong>${affected} komponen bahan</strong> berdasarkan resep BOM.</div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('inputJumlah').value = '1';
+    }
+    </script>
+</body>
+</html>
+

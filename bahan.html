@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Master Bahan Baku - GINDACO Mall Artha Gading</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/custom.css">
+</head>
+<body class="bg-light">
+
+    <!-- NAVBAR CONTAINER -->
+    <div id="navbar-container"></div>
+
+    <div class="container-fluid px-lg-4 py-4">
+
+        <!-- KOP SURAT PRINT RESMI -->
+        <div id="print-header-container"></div>
+
+        <!-- PAGE HEADER -->
+        <div class="page-header-box">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1 small">
+                        <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none text-muted">Dashboard</a></li>
+                        <li class="breadcrumb-item active text-danger fw-semibold" aria-current="page">Data Bahan Baku</li>
+                    </ol>
+                </nav>
+                <h1 class="page-header-title">
+                    <i class="fas fa-boxes-stacked text-danger"></i> Data Master Bahan Baku &amp; Stok Gudang
+                </h1>
+                <p class="page-header-desc">
+                    Monitoring ketersediaan fisik bahan baku, ambang batas safety stock, dan satuan ukuran di Gindaco Artha Gading.
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <button onclick="window.print()" class="btn btn-soft">
+                    <i class="fas fa-print me-1"></i> Cetak Laporan
+                </button>
+                <button type="button" class="btn btn-gindaco" data-bs-toggle="modal" data-bs-target="#modalTambahBahan">
+                    <i class="fas fa-plus me-1"></i> Tambah Bahan
+                </button>
+                <a href="rekomendasi.html" class="btn btn-outline-danger">
+                    <i class="fas fa-clipboard-check me-1"></i> Rekomendasi SPK
+                </a>
+            </div>
+        </div>
+
+        <!-- QUICK STATS ROW -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="stat-card stat-primary py-3">
+                    <div>
+                        <p class="stat-label mb-1">Total Bahan Terdaftar</p>
+                        <h4 class="stat-value mb-0 fs-3" id="kpiTotalBahan">0 <span class="fs-6 fw-normal text-muted">Item</span></h4>
+                    </div>
+                    <div class="stat-icon" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                        <i class="fas fa-cubes"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card stat-success py-3">
+                    <div>
+                        <p class="stat-label mb-1">Stok Aman / Stabil</p>
+                        <h4 class="stat-value mb-0 fs-3 text-success" id="kpiAmanCount">0 <span class="fs-6 fw-normal text-muted">Item</span></h4>
+                    </div>
+                    <div class="stat-icon" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                        <i class="fas fa-shield-check"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card stat-danger py-3">
+                    <div>
+                        <p class="stat-label mb-1">Stok Kritis / Restock</p>
+                        <h4 class="stat-value mb-0 fs-3 text-danger" id="kpiKritisCount">0 <span class="fs-6 fw-normal text-muted">Item</span></h4>
+                    </div>
+                    <div class="stat-icon" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                        <i class="fas fa-triangle-exclamation"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN TABLE CARD -->
+        <div class="modern-card">
+            <div class="modern-card-header flex-column flex-md-row gap-3">
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark">Daftar Inventaris Bahan Baku</h5>
+                    <span class="text-muted small" id="rowCountText">Memuat bahan baku...</span>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center gap-2 no-print">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary active" id="btnFilterAll" onclick="setFilter('all')">Semua</button>
+                        <button type="button" class="btn btn-outline-success" id="btnFilterAman" onclick="setFilter('aman')">Stok Aman</button>
+                        <button type="button" class="btn btn-outline-danger" id="btnFilterKritis" onclick="setFilter('kritis')">Stok Kritis</button>
+                    </div>
+
+                    <div class="input-group input-group-sm" style="max-width: 250px;">
+                        <span class="input-group-text bg-light text-muted"><i class="fas fa-search"></i></span>
+                        <input type="text" id="searchInput" class="form-control bg-light" placeholder="Cari nama / kode bahan...">
+                    </div>
+
+                    <button type="button" class="btn btn-sm btn-success fw-bold" onclick="exportBahanCSV()">
+                        <i class="fas fa-file-excel me-1"></i> Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-modern table-hover align-middle mb-0" id="bahanTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">No</th>
+                            <th style="width: 140px;">Kode Bahan</th>
+                            <th>Nama Bahan Baku</th>
+                            <th style="width: 90px;" class="text-center">Satuan</th>
+                            <th style="width: 150px;" class="text-end">Stok Fisik Gudang</th>
+                            <th style="width: 140px;" class="text-end">Safety Stock</th>
+                            <th style="width: 130px;" class="text-center">Status</th>
+                            <th style="width: 120px;" class="text-center no-print">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bahanTableBody">
+                        <!-- Diisi via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- FOOTER PRINT RESMI -->
+        <div id="print-footer-container"></div>
+
+    </div>
+
+    <!-- MODAL TAMBAH BAHAN BAKU -->
+    <div class="modal fade" id="modalTambahBahan" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-plus me-2"></i>Tambah Bahan Baku Baru</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="formTambahBahan" onsubmit="event.preventDefault(); submitTambahBahan();">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Kode Bahan Baku</label>
+                            <input type="text" id="tambahKode" class="form-control font-monospace" placeholder="Misal: 10692229 atau W000063" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Nama Bahan Baku</label>
+                            <input type="text" id="tambahNama" class="form-control" placeholder="Misal: OIL FOR TAKOYAKI" required>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-dark">Satuan Ukuran</label>
+                                <input type="text" id="tambahSatuan" class="form-control" placeholder="g / ml / ea / pack" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold text-dark">Stok Aktual Awal</label>
+                                <input type="number" step="0.1" id="tambahStok" class="form-control font-monospace" placeholder="0" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark">Safety Stock Acuan</label>
+                            <input type="number" step="0.1" id="tambahSafety" class="form-control font-monospace" placeholder="0" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-gindaco btn-sm fw-bold">Simpan Bahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- App Seed & DB Engine -->
+    <script src="assets/js/seed_data.js"></script>
+    <script src="assets/js/db.js"></script>
+    <script src="assets/js/components.js"></script>
+
+    <script>
+    let materialsList = [];
+    let currentFilter = 'all';
+
+    document.addEventListener("DOMContentLoaded", function() {
+        Components.renderNavbar('bahan');
+        Components.renderPrintHeader('print-header-container', 'Laporan Analisis Stok & Persediaan Bahan Baku', 'Monitoring Fisik Gudang & Ambang Batas Safety Stock &bull; Outlet Mall Artha Gading &bull; ' + new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }));
+        Components.renderPrintFooter('print-footer-container');
+
+        loadBahanTable();
+
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const q = this.value.toLowerCase().trim();
+                const rows = document.querySelectorAll('#bahanTableBody tr');
+                let count = 0;
+                rows.forEach(r => {
+                    if (r.innerText.toLowerCase().includes(q)) {
+                        r.style.display = '';
+                        count++;
+                    } else {
+                        r.style.display = 'none';
+                    }
+                });
+                document.getElementById('rowCountText').innerText = `Menampilkan ${count} dari ${materialsList.length} bahan baku`;
+            });
+        }
+    });
+
+    function loadBahanTable() {
+        materialsList = GindacoDB.getBahanBaku();
+        const tbody = document.getElementById('bahanTableBody');
+        tbody.innerHTML = '';
+
+        let amanCount = 0;
+        let kritisCount = 0;
+
+        materialsList.forEach((b, idx) => {
+            const isKritis = b.stok_aktual <= (b.safety_stock || 0);
+            if (isKritis) kritisCount++;
+            else amanCount++;
+
+            const statusClass = isKritis ? 'kritis' : 'aman';
+            const statusBadge = isKritis 
+                ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="fas fa-triangle-exclamation me-1"></i>Kritis</span>' 
+                : '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="fas fa-check me-1"></i>Aman</span>';
+
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-status', statusClass);
+            tr.innerHTML = `
+                <td class="text-muted fw-semibold">${idx + 1}</td>
+                <td><span class="badge bg-light text-dark border font-monospace">${b.kode_bahan}</span></td>
+                <td><strong class="text-dark">${b.nama_bahan}</strong></td>
+                <td class="text-center"><span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">${b.satuan}</span></td>
+                <td class="text-end font-monospace fw-bold text-dark">${b.stok_aktual.toLocaleString('id-ID')}</td>
+                <td class="text-end font-monospace text-muted">${b.safety_stock.toLocaleString('id-ID')}</td>
+                <td class="text-center">${statusBadge}</td>
+                <td class="text-center no-print">
+                    <div class="btn-group btn-group-sm">
+                        <a href="edit_bahan.html?id=${b.id}" class="btn btn-outline-secondary" title="Edit stok">
+                            <i class="fas fa-pen-to-square"></i>
+                        </a>
+                        <button type="button" class="btn btn-outline-danger" onclick="deleteBahanItem(${b.id}, '${b.nama_bahan}')" title="Hapus bahan">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('kpiTotalBahan').innerHTML = `${materialsList.length} <span class="fs-6 fw-normal text-muted">Item</span>`;
+        document.getElementById('kpiAmanCount').innerHTML = `${amanCount} <span class="fs-6 fw-normal text-muted">Item</span>`;
+        document.getElementById('kpiKritisCount').innerHTML = `${kritisCount} <span class="fs-6 fw-normal text-muted">Item</span>`;
+        document.getElementById('rowCountText').innerText = `Menampilkan ${materialsList.length} bahan baku`;
+    }
+
+    function setFilter(status) {
+        currentFilter = status;
+        document.getElementById('btnFilterAll').classList.toggle('active', status === 'all');
+        document.getElementById('btnFilterAman').classList.toggle('active', status === 'aman');
+        document.getElementById('btnFilterKritis').classList.toggle('active', status === 'kritis');
+
+        const rows = document.querySelectorAll('#bahanTableBody tr');
+        let count = 0;
+        rows.forEach(r => {
+            const rStat = r.getAttribute('data-status');
+            if (status === 'all' || rStat === status) {
+                r.style.display = '';
+                count++;
+            } else {
+                r.style.display = 'none';
+            }
+        });
+        document.getElementById('rowCountText').innerText = `Menampilkan ${count} bahan baku (Filter: ${status.toUpperCase()})`;
+    }
+
+    function submitTambahBahan() {
+        const kode = document.getElementById('tambahKode').value.trim();
+        const nama = document.getElementById('tambahNama').value.trim();
+        const satuan = document.getElementById('tambahSatuan').value.trim();
+        const stok = parseFloat(document.getElementById('tambahStok').value) || 0;
+        const safety = parseFloat(document.getElementById('tambahSafety').value) || 0;
+
+        if (!kode || !nama || !satuan) {
+            alert('Mohon lengkapi seluruh kolom!');
+            return;
+        }
+
+        GindacoDB.addBahanBaku({
+            kode_bahan: kode,
+            nama_bahan: nama,
+            satuan: satuan,
+            stok_aktual: stok,
+            safety_stock: safety
+        });
+
+        const modalEl = document.getElementById('modalTambahBahan');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+        document.getElementById('formTambahBahan').reset();
+
+        alert(`Bahan "${nama}" berhasil ditambahkan!`);
+        loadBahanTable();
+    }
+
+    function deleteBahanItem(id, nama) {
+        if (confirm(`Yakin ingin menghapus bahan baku "${nama}" dari sistem?`)) {
+            GindacoDB.deleteBahanBaku(id);
+            loadBahanTable();
+        }
+    }
+
+    function exportBahanCSV() {
+        if (materialsList.length === 0) return;
+        let csv = "data:text/csv;charset=utf-8,No,Kode Bahan,Nama Bahan,Satuan,Stok Aktual,Safety Stock,Status\r\n";
+        materialsList.forEach((b, i) => {
+            const stat = b.stok_aktual <= b.safety_stock ? 'Kritis' : 'Aman';
+            csv += `${i + 1},"${b.kode_bahan}","${b.nama_bahan}","${b.satuan}",${b.stok_aktual},${b.safety_stock},${stat}\r\n`;
+        });
+        const link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csv));
+        link.setAttribute("download", `Master_Bahan_Baku_Gindaco_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    </script>
+</body>
+</html>
+

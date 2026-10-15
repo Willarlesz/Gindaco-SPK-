@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import POS CSV - GINDACO Mall Artha Gading</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/custom.css">
+</head>
+<body class="bg-light">
+
+    <!-- NAVBAR CONTAINER -->
+    <div id="navbar-container"></div>
+
+    <div class="container py-5" style="max-width: 800px;">
+
+        <!-- BREADCRUMB -->
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb small">
+                <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none text-muted">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="historis.html" class="text-decoration-none text-muted">Data Historis</a></li>
+                <li class="breadcrumb-item active text-danger fw-semibold" aria-current="page">Import POS CSV</li>
+            </ol>
+        </nav>
+
+        <div id="alertBox"></div>
+
+        <div class="modern-card">
+            <div class="modern-card-header bg-light">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="brand-icon" style="width: 44px; height: 44px; font-size: 1.2rem; background: linear-gradient(135deg, #c01b22, #ea580c); color: #fff;">
+                        <i class="fas fa-file-csv"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">Import Data Penjualan POS &amp; Eksekusi BOM</h5>
+                        <span class="text-muted small">Konversi otomatis menu terjual ke pemakaian historis bahan baku</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modern-card-body p-4">
+                <form id="formImportCSV" onsubmit="event.preventDefault(); processImportCSV();">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small text-uppercase">Pilih File CSV Laporan Penjualan</label>
+                        <input type="file" id="csvFileInput" class="form-control" accept=".csv,text/csv,text/plain" required>
+                        <span class="form-text text-muted small">Mendukung format POS Gindaco: <code>article_code</code>, <code>article_name</code>, <code>quantity</code>, <code>void</code>.</span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark small text-uppercase">Target Periode Data Historis</label>
+                        <input type="text" id="periodeInput" class="form-control font-monospace fw-semibold" placeholder="Contoh: April 2026" required>
+                        <span class="form-text text-muted small">Periode ini akan dicatat sebagai label pada tabel data historis untuk kalkulasi peramalan.</span>
+                    </div>
+
+                    <div class="p-3 bg-light rounded-3 border mb-4">
+                        <h6 class="fw-bold text-dark mb-2"><i class="fas fa-magic text-danger me-2"></i>Fitur Pemrosesan Otomatis:</h6>
+                        <ul class="text-muted small mb-0 ps-3">
+                            <li>Otomatis mengabaikan item transaksi yang di-void (<code>void == True</code>).</li>
+                            <li>Recipe Explosion: Mengalikan kuantitas menu terjual dengan resep BOM bahan baku.</li>
+                            <li>Hasil pemakaian langsung tersimpan ke LocalStorage dan tersedia di halaman <strong>Smoothing Bulanan</strong> dan <strong>Data Historis</strong>.</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="historis.html" class="btn btn-outline-secondary px-3">
+                            <i class="fas fa-arrow-left me-1"></i> Kembali
+                        </a>
+                        <button type="submit" class="btn btn-gindaco px-4 fw-bold" id="btnSubmit">
+                            <i class="fas fa-upload me-1"></i> Proses &amp; Simpan ke Historis
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- App Seed & DB Engine -->
+    <script src="assets/js/seed_data.js"></script>
+    <script src="assets/js/db.js"></script>
+    <script src="assets/js/components.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        Components.renderNavbar('import_csv');
+        const d = new Date();
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        document.getElementById('periodeInput').value = `${months[d.getMonth()]} ${d.getFullYear()}`;
+    });
+
+    async function processImportCSV() {
+        const fileInput = document.getElementById('csvFileInput');
+        const periode = document.getElementById('periodeInput').value.trim();
+        const btnSubmit = document.getElementById('btnSubmit');
+
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert('Silakan pilih file CSV!');
+            return;
+        }
+
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>Memproses...`;
+
+        try {
+            const file = fileInput.files[0];
+            const text = await readFileAsText(file);
+            const parsed = parseCSVClient(text);
+
+            if (Object.keys(parsed.menuSales).length === 0) {
+                throw new Error('Tidak ada data penjualan valid yang ditemukan dalam file CSV.');
+            }
+
+            // Jalankan Recipe Explosion
+            const bahanUsage = GindacoDB.explodeMenuSalesToIngredients(parsed.menuSales);
+            const allBahan = GindacoDB.getBahanBaku();
+
+            // Format ke batch historis
+            const newHistoris = [];
+            allBahan.forEach(b => {
+                const kb = b.kode_bahan;
+                const usage = bahanUsage[kb] || 0.0;
+                newHistoris.push({
+                    id_bahan: b.id,
+                    periode: periode,
+                    pemakaian_aktual: parseFloat(usage.toFixed(2))
+                });
+            });
+
+            // Simpan ke database
+            GindacoDB.addHistorisBatch(newHistoris);
+
+            document.getElementById('alertBox').innerHTML = `
+                <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
+                    <i class="fas fa-check-circle me-2 fs-5"></i>
+                    <strong>Import Berhasil!</strong> ${Object.keys(parsed.menuSales).length} menu terjual berhasil dikonversi via BOM menjadi data pemakaian untuk <strong>${allBahan.length} bahan baku</strong> pada periode <strong>${periode}</strong>.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+
+            document.getElementById('formImportCSV').reset();
+            document.getElementById('periodeInput').value = periode;
+        } catch (err) {
+            console.error(err);
+            document.getElementById('alertBox').innerHTML = `
+                <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+                    <i class="fas fa-circle-exclamation me-2 fs-5"></i>
+                    <strong>Gagal:</strong> ${err.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+        } finally {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = `<i class="fas fa-upload me-1"></i> Proses &amp; Simpan ke Historis`;
+        }
+    }
+
+    function readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result);
+            reader.onerror = e => reject(new Error('Gagal membaca file: ' + file.name));
+            reader.readAsText(file);
+        });
+    }
+
+    function parseCSVClient(csvText) {
+        const lines = csvText.split(/\r\n|\n/).filter(l => l.trim().length > 0);
+        if (lines.length < 2) throw new Error('Format CSV tidak memiliki data.');
+
+        const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/["'\uFEFF]/g, ''));
+        const colCode = header.findIndex(h => ['article_code', 'item_code', 'kode_artikel', 'code'].includes(h));
+        const colName = header.findIndex(h => ['article_name', 'item_name', 'nama_artikel', 'name'].includes(h));
+        const colQty = header.findIndex(h => ['quantity', 'qty', 'jumlah'].includes(h));
+        const colVoid = header.findIndex(h => ['void', 'is_void', 'status_void'].includes(h));
+
+        if (colCode === -1 || colQty === -1) {
+            throw new Error('Kolom article_code dan quantity wajib ada.');
+        }
+
+        const menuSales = {};
+        for (let i = 1; i < lines.length; i++) {
+            const row = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+            if (row.length <= Math.max(colCode, colQty)) continue;
+
+            if (colVoid !== -1) {
+                const v = (row[colVoid] || '').toLowerCase();
+                if (['true', '1', 't', 'yes'].includes(v)) continue;
+            }
+
+            const code = row[colCode];
+            if (!code) continue;
+
+            const name = (colName !== -1 && row[colName]) ? row[colName] : code;
+            const qty = parseFloat(row[colQty].replace(/,/g, '.')) || 0;
+
+            if (!menuSales[code]) menuSales[code] = { name, qty: 0 };
+            menuSales[code].qty += qty;
+        }
+
+        return { menuSales };
+    }
+    </script>
+</body>
+</html>
+

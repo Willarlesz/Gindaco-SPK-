@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logging Out - GINDACO SPK</title>
+</head>
+<body style="font-family: sans-serif; text-align: center; padding-top: 100px;">
+    <h3>Mengeluarkan akun dari sistem...</h3>
+    <script src="assets/js/db.js"></script>
+    <script>
+        if (window.GindacoDB) {
+            window.GindacoDB.logout();
+        }
+        setTimeout(function() {
+            window.location.href = 'login.html';
+        }, 500);
+    </script>
+</body>
+</html>
+

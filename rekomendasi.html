@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekomendasi Pengadaan SPK Bahan Baku - GINDACO Mall Artha Gading</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/custom.css">
+    <style>
+        .row-overridden {
+            background-color: #fffbeb !important;
+            border-left: 4px solid #f59e0b !important;
+        }
+        .row-overridden .spk-final-input {
+            border-color: #f59e0b !important;
+            background-color: #fef3c7 !important;
+            color: #b45309 !important;
+        }
+        .row-forecast-edited {
+            background-color: #f0fdf4 !important;
+        }
+        .row-forecast-edited .spk-forecast-input {
+            border-color: #10b981 !important;
+            background-color: #ecfdf5 !important;
+            color: #047857 !important;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <!-- NAVBAR CONTAINER -->
+    <div id="navbar-container"></div>
+
+    <div class="container-fluid px-lg-4 py-4">
+
+        <!-- KOP SURAT PRINT RESMI -->
+        <div id="print-header-container"></div>
+
+        <!-- PAGE HEADER -->
+        <div class="page-header-box">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1 small">
+                        <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none text-muted">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="weekly_forecast.html" class="text-decoration-none text-muted">Weekly Sales Forecast</a></li>
+                        <li class="breadcrumb-item active text-danger fw-semibold" aria-current="page">Rekomendasi SPK Bahan Baku</li>
+                    </ol>
+                </nav>
+                <h1 class="page-header-title">
+                    <i class="fas fa-clipboard-check text-danger"></i> Rekomendasi Pengadaan Bahan Baku (Surat Pesanan Kebutuhan / SPK)
+                </h1>
+                <p class="page-header-desc">
+                    Sistem Pendukung Keputusan pengadaan bahan baku dengan <strong>Dynamic Safety Stock</strong> berbasis Forecast Mingguan: cadangan buffer fleksibel dan presisi tanpa risiko overstock.
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <button onclick="window.print()" class="btn btn-soft">
+                    <i class="fas fa-print me-1"></i> Cetak Dokumen SPK
+                </button>
+                <a href="weekly_forecast.html" class="btn btn-gindaco">
+                    <i class="fas fa-calendar-week me-1"></i> Input CSV Penjualan Mingguan
+                </a>
+            </div>
+        </div>
+
+        <!-- PARAMETER BUFFER CADANGAN AMAN (DYNAMIC SAFETY STOCK CONTROLLER) -->
+        <div class="modern-card mb-4 no-print border-start border-4 border-danger">
+            <div class="p-3">
+                <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+                    <div class="d-flex align-items-center">
+                        <div class="brand-icon me-3" style="width: 44px; height: 44px; font-size: 1.25rem; background: linear-gradient(135deg, #c01b22, #ea580c); color: #fff;">
+                            <i class="fas fa-shield-halved"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <h6 class="fw-bold mb-0 text-dark">Parameter Buffer Cadangan Aman (Dynamic Safety Stock)</h6>
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold" id="badgeBufferDisplay">
+                                    Buffer: 1 Hari (Default)
+                                </span>
+                            </div>
+                            <p class="text-muted small mb-0">
+                                <code>Daily Usage = Forecast / 7</code> &bull; <code>Safety Stock = Daily Usage &times; Buffer Hari</code> &bull; <code>Target Stok = Forecast + Safety Stock</code>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- PRESET BUTTONS & CUSTOM INPUT -->
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <span class="text-muted small fw-semibold me-1">Preset:</span>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-danger active" id="btnPreset1D" onclick="setBufferPreset('days', 1.0)">1 Hari (Default)</button>
+                            <button type="button" class="btn btn-outline-danger" id="btnPreset2D" onclick="setBufferPreset('days', 2.0)">2 Hari</button>
+                            <button type="button" class="btn btn-outline-danger" id="btnPreset3D" onclick="setBufferPreset('days', 3.0)">3 Hari</button>
+                            <button type="button" class="btn btn-outline-danger" id="btnPreset15P" onclick="setBufferPreset('percent', 15.0)">15%</button>
+                            <button type="button" class="btn btn-outline-danger" id="btnPreset20P" onclick="setBufferPreset('percent', 20.0)">20%</button>
+                        </div>
+
+                        <div class="input-group input-group-sm ms-lg-2" style="max-width: 230px;">
+                            <input type="number" step="0.1" min="0" id="customBufferValue" class="form-control text-center font-monospace fw-bold" value="1.0" oninput="onCustomBufferInput()">
+                            <select id="customBufferUnit" class="form-select" onchange="onCustomBufferInput()" style="max-width: 100px;">
+                                <option value="days" selected>Hari</option>
+                                <option value="percent">% Pct</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI SUMMARY CARDS -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card stat-primary py-3">
+                    <div>
+                        <p class="stat-label mb-1">Total Bahan Dianalisis</p>
+                        <h4 class="stat-value mb-0 fs-3" id="kpiTotalMaterials">0 <span class="fs-6 fw-normal text-muted">Item</span></h4>
+                    </div>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-boxes-packing text-primary"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="stat-card stat-danger py-3">
+                    <div>
+                        <p class="stat-label mb-1">Perlu Restock / Order</p>
+                        <h4 class="stat-value mb-0 fs-3" id="kpiNeedOrder">0 <span class="fs-6 fw-normal text-muted">Bahan</span></h4>
+                    </div>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-truck-ramp-box text-danger"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="stat-card stat-success py-3">
+                    <div>
+                        <p class="stat-label mb-1">Stok Aman / Cukup</p>
+                        <h4 class="stat-value mb-0 fs-3" id="kpiSafeCount">0 <span class="fs-6 fw-normal text-muted">Bahan</span></h4>
+                    </div>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-circle-check text-success"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="stat-card stat-warning py-3">
+                    <div>
+                        <p class="stat-label mb-1">Total Kuantitas Order</p>
+                        <h4 class="stat-value mb-0 fs-3" id="kpiTotalOrderQty">0.0 <span class="fs-6 fw-normal text-muted">Unit</span></h4>
+                    </div>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-cart-flatbed text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN SPK TABLE CARD -->
+        <div class="modern-card mb-4">
+            <div class="modern-card-header flex-column flex-md-row gap-3">
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="fas fa-table-list text-danger me-2"></i>Tabel Rekomendasi Pesanan Pengadaan (SPK)
+                    </h5>
+                    <span class="text-muted small" id="rowCountText">
+                        Formula: <code>Target = Forecast + Safety Stock Dinamis</code> &bull; <code>Saran Order = Target - Stok Fisik</code> (Min: 0)
+                    </span>
+                </div>
+
+                <!-- Toolbar: Filter, Search, Reset, Save, Export -->
+                <div class="d-flex flex-wrap align-items-center gap-2 no-print">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary active" id="btnFilterAll" onclick="setFilter('all')">Semua</button>
+                        <button type="button" class="btn btn-outline-danger" id="btnFilterOrder" onclick="setFilter('order')">Perlu Order</button>
+                        <button type="button" class="btn btn-outline-success" id="btnFilterAman" onclick="setFilter('aman')">Stok Aman</button>
+                    </div>
+
+                    <div class="input-group input-group-sm" style="max-width: 220px;">
+                        <span class="input-group-text bg-light text-muted"><i class="fas fa-search"></i></span>
+                        <input type="text" id="searchInput" class="form-control bg-light" placeholder="Cari bahan...">
+                    </div>
+
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetSPKOverrides()" title="Kembalikan semua koreksi manual ke kalkulasi sistem">
+                        <i class="fas fa-rotate-left me-1"></i> Reset
+                    </button>
+
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="saveSPKStateToStorage()" title="Simpan perubahan SPK ke penyimpanan browser">
+                        <i class="fas fa-floppy-disk me-1"></i> Simpan Sesi
+                    </button>
+
+                    <button type="button" class="btn btn-sm btn-success fw-bold" onclick="exportSPKToCSV()" title="Unduh Lembar SPK ke format CSV">
+                        <i class="fas fa-file-excel me-1"></i> Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-modern table-hover align-middle mb-0" id="spkTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">No</th>
+                            <th style="width: 120px;">Kode Bahan</th>
+                            <th>Nama Bahan Baku</th>
+                            <th style="width: 75px;" class="text-center">Satuan</th>
+                            <th style="width: 115px;" class="text-end">Stok Fisik (On-Hand)</th>
+                            <th style="width: 145px;" class="text-end">Forecast Mingguan</th>
+                            <th style="width: 135px;" class="text-end">Safety Stock Dinamis</th>
+                            <th style="width: 120px;" class="text-end">Target Stok</th>
+                            <th style="width: 145px;" class="text-end">Rekomendasi Order SPK</th>
+                            <th style="width: 135px;" class="text-center">Final Order</th>
+                        </tr>
+                    </thead>
+                    <tbody id="spkTableBody">
+                        <!-- Diisi secara dinamis oleh JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- FOOTER PRINT RESMI -->
+        <div id="print-footer-container"></div>
+
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- App Seed & DB Engine -->
+    <script src="assets/js/seed_data.js"></script>
+    <script src="assets/js/db.js"></script>
+    <script src="assets/js/components.js"></script>
+
+    <script>
+    let spkMaterials = [];
+    let currentBufferUnit = 'days';
+    let currentBufferValue = 1.0;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        Components.renderNavbar('rekomendasi');
+        Components.renderPrintHeader('print-header-container', 'Laporan Rekomendasi Pengadaan Bahan Baku (SPK Mingguan)', 'Dynamic Safety Stock Berbasis Forecast &bull; Outlet Mall Artha Gading &bull; ' + new Date().toLocaleDateString('id-ID'));
+        Components.renderPrintFooter('print-footer-container');
+
+        // Ambil data SPK dari GindacoDB
+        const spkState = GindacoDB.getSPKState();
+        spkMaterials = spkState.materials || [];
+        currentBufferUnit = spkState.buffer_unit || 'days';
+        currentBufferValue = parseFloat(spkState.buffer_value) || 1.0;
+
+        // Inisialisasi UI buffer
+        document.getElementById('customBufferValue').value = currentBufferValue;
+        document.getElementById('customBufferUnit').value = currentBufferUnit;
+        updateBufferPresetButtons();
+        updateBufferBadge();
+
+        renderSPKTable();
+
+        // Search Filter
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase().trim();
+                const rows = document.querySelectorAll('#spkTableBody tr');
+                let count = 0;
+                rows.forEach(r => {
+                    if (r.innerText.toLowerCase().includes(query)) {
+                        r.style.display = '';
+                        count++;
+                    } else {
+                        r.style.display = 'none';
+                    }
+                });
+                document.getElementById('rowCountText').innerText = `Menampilkan ${count} dari ${spkMaterials.length} bahan baku`;
+            });
+        }
+    });
+
+    function updateBufferPresetButtons() {
+        document.getElementById('btnPreset1D').classList.toggle('active', currentBufferUnit === 'days' && currentBufferValue === 1.0);
+        document.getElementById('btnPreset2D').classList.toggle('active', currentBufferUnit === 'days' && currentBufferValue === 2.0);
+        document.getElementById('btnPreset3D').classList.toggle('active', currentBufferUnit === 'days' && currentBufferValue === 3.0);
+        document.getElementById('btnPreset15P').classList.toggle('active', currentBufferUnit === 'percent' && currentBufferValue === 15.0);
+        document.getElementById('btnPreset20P').classList.toggle('active', currentBufferUnit === 'percent' && currentBufferValue === 20.0);
+    }
+
+    function updateBufferBadge() {
+        const badge = document.getElementById('badgeBufferDisplay');
+        if (!badge) return;
+        badge.innerText = (currentBufferUnit === 'percent') ? `Buffer: ${currentBufferValue}% Forecast` : `Buffer: ${currentBufferValue} Hari`;
+    }
+
+    function setBufferPreset(unit, value) {
+        currentBufferUnit = unit;
+        currentBufferValue = parseFloat(value);
+        document.getElementById('customBufferValue').value = currentBufferValue;
+        document.getElementById('customBufferUnit').value = currentBufferUnit;
+        updateBufferPresetButtons();
+        updateBufferBadge();
+        recalculateAllRows();
+    }
+
+    function onCustomBufferInput() {
+        const valRaw = parseFloat(document.getElementById('customBufferValue').value);
+        const unit = document.getElementById('customBufferUnit').value;
+        if (!isNaN(valRaw) && valRaw >= 0) {
+            currentBufferUnit = unit;
+            currentBufferValue = valRaw;
+            updateBufferPresetButtons();
+            updateBufferBadge();
+            recalculateAllRows();
+        }
+    }
+
+    function renderSPKTable() {
+        const tbody = document.getElementById('spkTableBody');
+        tbody.innerHTML = '';
+
+        spkMaterials.forEach((item, idx) => {
+            const tr = document.createElement('tr');
+            tr.id = `spk-row-${idx}`;
+            tr.setAttribute('data-idx', idx);
+            tr.setAttribute('data-stock', item.stok_fisik);
+            tr.setAttribute('data-raw-forecast', item.forecast_sistem);
+
+            tr.innerHTML = `
+                <td class="text-muted fw-semibold">${idx + 1}</td>
+                <td><span class="badge bg-light text-dark border font-monospace">${item.kode_bahan}</span></td>
+                <td><strong class="text-dark">${item.nama_bahan}</strong></td>
+                <td class="text-center">
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">
+                        ${item.satuan}
+                    </span>
+                </td>
+                <td class="text-end font-monospace fw-semibold text-dark">${item.stok_fisik.toLocaleString('id-ID')}</td>
+                <td class="text-end">
+                    <span class="d-none d-print-inline font-monospace fw-bold text-primary" id="print-forecast-${idx}">
+                        ${item.final_forecast.toLocaleString('id-ID')}
+                    </span>
+                    <div class="input-group input-group-sm justify-content-end d-print-none" style="max-width: 130px; margin-left: auto;">
+                        <input type="number" step="0.1" min="0" class="form-control form-control-sm text-end font-monospace fw-bold spk-forecast-input" 
+                               value="${item.final_forecast}" 
+                               data-idx="${idx}"
+                               title="Edit Forecast untuk kalkulasi ulang real-time"
+                               oninput="handleForecastChange(this, ${idx})">
+                    </div>
+                </td>
+                <td class="text-end">
+                    <span class="badge bg-light text-secondary border font-monospace fs-6" id="badge-safestock-${idx}">
+                        ${item.dynamic_safety_stock.toLocaleString('id-ID')}
+                    </span>
+                </td>
+                <td class="text-end font-monospace fw-bold text-dark">
+                    <span id="val-target-${idx}">${item.target_stok.toLocaleString('id-ID')}</span>
+                </td>
+                <td class="text-end">
+                    <span class="badge-pill-custom ${item.saran_order > 0 ? 'badge-subtle-danger' : 'badge-subtle-success'} fs-6 fw-bold spk-order-badge" id="badge-order-${idx}">
+                        <i class="fas ${item.saran_order > 0 ? 'fa-cart-shopping' : 'fa-check'} me-1" id="icon-order-${idx}"></i>
+                        <span id="val-saran-order-${idx}">${item.saran_order.toLocaleString('id-ID')}</span>
+                    </span>
+                </td>
+                <td class="text-center">
+                    <span class="d-none d-print-inline fw-bold font-monospace text-dark" id="print-final-${idx}">
+                        ${(item.order_final !== undefined ? item.order_final : item.saran_order).toLocaleString('id-ID')}
+                    </span>
+                    <input type="number" step="0.01" min="0" class="form-control form-control-sm text-center font-monospace fw-bold spk-final-input d-print-none" 
+                           style="max-width: 115px; margin: 0 auto;" 
+                           placeholder="${item.saran_order.toFixed(2)}"
+                           value="${item.order_final !== undefined && item.order_final !== item.saran_order ? item.order_final : ''}"
+                           data-idx="${idx}"
+                           title="Input manual pembulatan pack/dus"
+                           oninput="handleFinalOrderInput(this, ${idx})">
+                </td>
+            `;
+            tbody.appendChild(tr);
+            recalculateRow(idx, item.final_forecast);
+        });
+
+        recalcSPKSummary();
+    }
+
+    function recalculateRow(idx, forecastVal) {
+        const row = document.getElementById(`spk-row-${idx}`);
+        if (!row) return;
+
+        const stock = parseFloat(row.getAttribute('data-stock')) || 0;
+        const rawForecast = parseFloat(row.getAttribute('data-raw-forecast')) || 0;
+
+        // Daily usage = forecast / 7
+        const dailyUsage = forecastVal / 7.0;
+        let dynamicSafeStock = 0;
+        if (currentBufferUnit === 'percent') {
+            dynamicSafeStock = Math.round(forecastVal * (currentBufferValue / 100.0));
+        } else {
+            dynamicSafeStock = Math.round(dailyUsage * currentBufferValue);
+        }
+
+        const targetStok = parseFloat((forecastVal + dynamicSafeStock).toFixed(2));
+        let saranOrder = targetStok - stock;
+        if (saranOrder < 0) saranOrder = 0.0;
+        saranOrder = parseFloat(saranOrder.toFixed(2));
+
+        spkMaterials[idx].final_forecast = forecastVal;
+        spkMaterials[idx].dynamic_safety_stock = dynamicSafeStock;
+        spkMaterials[idx].target_stok = targetStok;
+        spkMaterials[idx].saran_order = saranOrder;
+        spkMaterials[idx].is_order = (saranOrder > 0);
+
+        row.setAttribute('data-forecast', forecastVal);
+        row.setAttribute('data-safestock', dynamicSafeStock);
+        row.setAttribute('data-target', targetStok);
+        row.setAttribute('data-saran-order', saranOrder);
+
+        if (Math.abs(forecastVal - rawForecast) > 0.001) {
+            row.classList.add('row-forecast-edited');
+        } else {
+            row.classList.remove('row-forecast-edited');
+        }
+
+        // Update UI
+        const badgeSafe = document.getElementById(`badge-safestock-${idx}`);
+        if (badgeSafe) badgeSafe.innerText = dynamicSafeStock.toFixed(2);
+
+        const valTarget = document.getElementById(`val-target-${idx}`);
+        if (valTarget) valTarget.innerText = targetStok.toFixed(2);
+
+        const valSaran = document.getElementById(`val-saran-order-${idx}`);
+        if (valSaran) valSaran.innerText = saranOrder.toFixed(2);
+
+        const badgeOrder = document.getElementById(`badge-order-${idx}`);
+        const iconOrder = document.getElementById(`icon-order-${idx}`);
+        if (badgeOrder) {
+            badgeOrder.className = `badge-pill-custom ${saranOrder > 0 ? 'badge-subtle-danger' : 'badge-subtle-success'} fs-6 fw-bold spk-order-badge`;
+        }
+        if (iconOrder) {
+            iconOrder.className = `fas ${saranOrder > 0 ? 'fa-cart-shopping' : 'fa-check'} me-1`;
+        }
+
+        const printForecast = document.getElementById(`print-forecast-${idx}`);
+        if (printForecast) printForecast.innerText = forecastVal.toFixed(2);
+
+        const inputFinal = row.querySelector('.spk-final-input');
+        const printFinal = document.getElementById(`print-final-${idx}`);
+        if (inputFinal) {
+            inputFinal.placeholder = saranOrder.toFixed(2);
+            const userFinal = inputFinal.value.trim();
+            if (userFinal === '' || isNaN(userFinal)) {
+                spkMaterials[idx].order_final = saranOrder;
+                if (printFinal) printFinal.innerText = saranOrder.toFixed(2);
+                row.setAttribute('data-status', saranOrder > 0 ? 'order' : 'aman');
+            } else {
+                const cVal = Math.max(0, parseFloat(userFinal));
+                spkMaterials[idx].order_final = cVal;
+                if (printFinal) printFinal.innerText = cVal.toFixed(2);
+                row.setAttribute('data-status', cVal > 0 ? 'order' : 'aman');
+            }
+        }
+    }
+
+    function recalculateAllRows() {
+        const rows = document.querySelectorAll('#spkTableBody tr');
+        rows.forEach((r, idx) => {
+            const inputF = r.querySelector('.spk-forecast-input');
+            const fVal = parseFloat(inputF.value) || 0;
+            recalculateRow(idx, fVal);
+        });
+        recalcSPKSummary();
+    }
+
+    function handleForecastChange(inputEl, idx) {
+        const val = inputEl.value.trim();
+        const fVal = (val !== '' && !isNaN(val)) ? Math.max(0, parseFloat(val)) : 0;
+        recalculateRow(idx, fVal);
+        recalcSPKSummary();
+    }
+
+    function handleFinalOrderInput(inputEl, idx) {
+        const row = document.getElementById(`spk-row-${idx}`);
+        const saranOrder = parseFloat(row.getAttribute('data-saran-order')) || 0;
+        const userVal = inputEl.value.trim();
+        const printSpan = document.getElementById(`print-final-${idx}`);
+
+        if (userVal !== '' && !isNaN(userVal)) {
+            const customVal = Math.max(0, parseFloat(userVal));
+            spkMaterials[idx].order_final = customVal;
+            row.classList.add('row-overridden');
+            row.setAttribute('data-status', customVal > 0 ? 'order' : 'aman');
+            if (printSpan) printSpan.innerText = customVal.toFixed(2);
+        } else {
+            spkMaterials[idx].order_final = saranOrder;
+            row.classList.remove('row-overridden');
+            row.setAttribute('data-status', saranOrder > 0 ? 'order' : 'aman');
+            if (printSpan) printSpan.innerText = saranOrder.toFixed(2);
+        }
+
+        recalcSPKSummary();
+    }
+
+    function recalcSPKSummary() {
+        let orderItems = 0;
+        let safeItems = 0;
+        let totalQty = 0;
+
+        spkMaterials.forEach(item => {
+            const effOrder = (item.order_final !== undefined) ? item.order_final : item.saran_order;
+            totalQty += effOrder;
+            if (effOrder > 0) orderItems++;
+            else safeItems++;
+        });
+
+        document.getElementById('kpiTotalMaterials').innerHTML = `${spkMaterials.length} <span class="fs-6 fw-normal text-muted">Item</span>`;
+        document.getElementById('kpiNeedOrder').innerHTML = `${orderItems} <span class="fs-6 fw-normal text-muted">Bahan</span>`;
+        document.getElementById('kpiSafeCount').innerHTML = `${safeItems} <span class="fs-6 fw-normal text-muted">Bahan</span>`;
+        document.getElementById('kpiTotalOrderQty').innerHTML = `${totalQty.toFixed(1)} <span class="fs-6 fw-normal text-muted">Unit</span>`;
+    }
+
+    function setFilter(status) {
+        document.getElementById('btnFilterAll').classList.toggle('active', status === 'all');
+        document.getElementById('btnFilterOrder').classList.toggle('active', status === 'order');
+        document.getElementById('btnFilterAman').classList.toggle('active', status === 'aman');
+
+        const rows = document.querySelectorAll('#spkTableBody tr');
+        let visible = 0;
+        rows.forEach(r => {
+            const rStatus = r.getAttribute('data-status');
+            if (status === 'all' || rStatus === status) {
+                r.style.display = '';
+                visible++;
+            } else {
+                r.style.display = 'none';
+            }
+        });
+        document.getElementById('rowCountText').innerText = `Menampilkan ${visible} bahan baku (Filter: ${status.toUpperCase()})`;
+    }
+
+    function resetSPKOverrides() {
+        const rows = document.querySelectorAll('#spkTableBody tr');
+        rows.forEach((r, idx) => {
+            const rawForecast = parseFloat(r.getAttribute('data-raw-forecast')) || 0;
+            const fInput = r.querySelector('.spk-forecast-input');
+            if (fInput) fInput.value = rawForecast;
+
+            const oInput = r.querySelector('.spk-final-input');
+            if (oInput) oInput.value = '';
+            r.classList.remove('row-overridden');
+
+            recalculateRow(idx, rawForecast);
+        });
+        recalcSPKSummary();
+    }
+
+    function saveSPKStateToStorage() {
+        const state = {
+            materials: spkMaterials,
+            buffer_unit: currentBufferUnit,
+            buffer_value: currentBufferValue,
+            updated_at: new Date().toISOString()
+        };
+        GindacoDB.saveSPKState(state);
+        alert('Data rekomendasi SPK dan parameter buffer berhasil disimpan ke LocalStorage!');
+    }
+
+    function exportSPKToCSV() {
+        if (spkMaterials.length === 0) return;
+        let csv = "data:text/csv;charset=utf-8,";
+        csv += "No,Kode Bahan Baku,Nama Bahan Baku,Satuan,Stok Fisik OnHand,Forecast Mingguan,Safety Stock Dinamis,Target Stok,Rekomendasi Order SPK,Final Order,Status\r\n";
+
+        spkMaterials.forEach((item, idx) => {
+            const finalVal = (item.order_final !== undefined) ? item.order_final : item.saran_order;
+            const status = finalVal > 0 ? 'Perlu Order' : 'Stok Aman';
+            csv += `${idx + 1},"${item.kode_bahan}","${item.nama_bahan}","${item.satuan}",${item.stok_fisik},${item.final_forecast},${item.dynamic_safety_stock},${item.target_stok},${item.saran_order},${finalVal},${status}\r\n`;
+        });
+
+        const link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csv));
+        link.setAttribute("download", `SPK_Bahan_Baku_Gindaco_DynamicSafeStock_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    </script>
+</body>
+</html>
+

@@ -3,18 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard SPK Pengadaan - GINDACO Mall Artha Gading</title>
+    <title>Dashboard SPK - GINDACO</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/custom.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Auth Guard: Proteksi Akses Sesi Login Gindaco SPK -->
+    <script>
+        (function() {
+            var session = localStorage.getItem('gindaco_current_user');
+            if (!session || session === 'null' || session === 'undefined') {
+                window.location.replace('login.html');
+            }
+        })();
+    </script>
 </head>
 <body class="bg-light">
 
@@ -23,46 +30,39 @@
 
     <div class="container-fluid px-lg-4 py-4">
 
-        <!-- HERO BANNER -->
-        <div class="hero-banner mb-4">
-            <div class="row align-items-center">
-                <div class="col-lg-8 mb-3 mb-lg-0">
-                    <div class="hero-badge">
-                        <i class="fas fa-sparkles text-warning"></i>
-                        <span>Decision Support System &bull; Gindaco Mall Artha Gading</span>
+        <!-- DASHBOARD HEADER (CLEAN & HIGH CONTRAST) -->
+        <div class="dashboard-header mb-4">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                <div>
+                    <div class="header-badge">
+                        <i class="fas fa-shield-halved text-danger"></i>
+                        <span>Sistem Pendukung Keputusan Pengadaan Bahan Baku</span>
+                        <span class="badge bg-danger text-white ms-1" id="dashOutletBadge">Cabang Aktif</span>
                     </div>
-                    <h2 class="display-6 fw-bold mb-2">Selamat Datang di Portal SPK Gindaco</h2>
-                    <p class="mb-4 text-white-50 lead fs-6" style="max-width: 650px;">
-                        Optimasi pengadaan bahan baku Takoyaki & Taiyaki secara presisi menggunakan metode <strong>Single Exponential Smoothing</strong> terintegrasi langsung dengan <strong>Bill of Materials (BOM)</strong> dan <strong>Dynamic Safety Stock</strong>.
-                    </p>
+                    <h2 class="h3 fw-bold text-white mb-2">Dashboard GINDACO SPK</h2>
                     <div class="d-flex flex-wrap gap-2">
-                        <a href="weekly_forecast.html" class="btn btn-light fw-bold text-danger px-3 py-2 shadow-sm">
-                            <i class="fas fa-calendar-week me-1 text-danger"></i> Weekly Sales Forecast
+                        <a href="weekly_forecast.html" class="btn btn-danger fw-bold px-3 py-2 shadow-sm">
+                            <i class="fas fa-calendar-week me-1"></i> Weekly Sales Forecast
+                        </a>
+                        <a href="weekly_forecast.html#kelola-database" class="btn btn-outline-light fw-semibold px-3 py-2">
+                            <i class="fas fa-database me-1"></i> Kelola Database POS
                         </a>
                         <a href="rekomendasi.html" class="btn btn-outline-light fw-semibold px-3 py-2">
-                            <i class="fas fa-clipboard-check me-1"></i> Rekomendasi SPK Bahan Baku
+                            <i class="fas fa-clipboard-check me-1"></i> Rekomendasi SPK
                         </a>
-                        <a href="bahan.html" class="btn btn-dark bg-opacity-25 border-0 text-white fw-semibold px-3 py-2">
-                            <i class="fas fa-boxes-stacked me-1"></i> Cek Stok Gudang
+                        <a href="bahan.html" class="btn btn-outline-secondary text-white-50 fw-semibold px-3 py-2">
+                            <i class="fas fa-boxes-stacked me-1"></i> Data Stok Bahan
                         </a>
                     </div>
                 </div>
-                <div class="col-lg-4">
-                    <div class="p-3 bg-white rounded-4 shadow-lg text-center mb-2 position-relative" style="z-index: 2;">
-                        <img src="assets/img/gindaco_logo.webp" alt="Gindaco Indonesia" class="img-fluid py-1 px-2" style="max-height: 48px; width: auto; object-fit: contain;">
-                        <div class="border-top pt-2 mt-2 d-flex justify-content-between align-items-center px-1">
-                            <span class="badge bg-danger text-white px-2 py-1"><i class="fas fa-location-dot me-1"></i> Mall Artha Gading</span>
-                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25"><i class="fas fa-circle fa-2xs me-1"></i>Outlet Aktif</span>
+                <div class="text-lg-end d-none d-lg-block">
+                    <div class="p-3 rounded-3 border border-secondary border-opacity-25 bg-black bg-opacity-25 text-start" style="min-width: 240px;">
+                        <div class="text-muted small mb-1">Status Operasional</div>
+                        <div class="fw-bold text-white fs-6 mb-2">
+                            <i class="fas fa-circle-check text-success me-1"></i> Outlet Siap Order
                         </div>
-                    </div>
-                    <div class="p-3 bg-white bg-opacity-10 rounded-4 backdrop-blur border border-white border-opacity-25 text-start text-white position-relative" style="z-index: 2;">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="small text-white-50">Sistem Engine:</span>
-                            <span class="small fw-bold text-white"><i class="fas fa-bolt text-warning me-1"></i>Client-Side Static (Vercel/Pages)</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="small text-white-50">Waktu Lokal:</span>
-                            <span class="small fw-semibold text-white" id="liveClockText"><i class="far fa-clock text-info me-1"></i>Memuat...</span>
+                        <div class="small text-white-50" id="liveClockText">
+                            <i class="far fa-clock text-info me-1"></i> Memuat waktu...
                         </div>
                     </div>
                 </div>
@@ -142,7 +142,6 @@
                             <h5 class="fw-bold mb-0 text-dark">
                                 <i class="fas fa-chart-bar text-danger me-2"></i>Status Stok Bahan Baku Utama
                             </h5>
-                            <span class="text-muted small">Perbandingan Stok Aktual Fisik vs Safety Stock Cadangan</span>
                         </div>
                         <a href="bahan.html" class="btn btn-sm btn-outline-danger">
                             Kelola Bahan <i class="fas fa-arrow-right ms-1"></i>
@@ -164,7 +163,7 @@
                             <h5 class="fw-bold mb-0 text-dark">
                                 <i class="fas fa-bell text-warning me-2"></i>Perhatian Restock
                             </h5>
-                            <span class="text-muted small">Bahan dengan rasio stok paling mendesak</span>
+
                         </div>
                         <a href="rekomendasi.html" class="btn btn-sm btn-gindaco">
                             Buat SPK
@@ -173,45 +172,6 @@
                     <div class="modern-card-body p-0">
                         <div class="list-group list-group-flush" id="kritisListGroup">
                             <div class="p-3 text-center text-muted">Memuat data bahan kritis...</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ALUR SISTEM SPK WORKFLOW CARD -->
-        <div class="modern-card mt-4">
-            <div class="p-4">
-                <h5 class="fw-bold mb-3 text-dark">
-                    <i class="fas fa-route text-danger me-2"></i>Alur Operasional Pengadaan Bahan Baku Gindaco
-                </h5>
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <div class="p-3 bg-light rounded-3 border h-100">
-                            <div class="fw-bold text-danger mb-1"><i class="fas fa-file-csv me-1"></i> 1. Unggah CSV Penjualan</div>
-                            <p class="small text-muted mb-2">Unggah file laporan penjualan mingguan POS (Minggu Lalu & Minggu Sekarang).</p>
-                            <a href="weekly_forecast.html" class="btn btn-sm btn-outline-danger">Buka Modul &rarr;</a>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="p-3 bg-light rounded-3 border h-100">
-                            <div class="fw-bold text-primary mb-1"><i class="fas fa-utensils me-1"></i> 2. BOM Recipe Explosion</div>
-                            <p class="small text-muted mb-2">Sistem otomatis mengonversi menu jual Takoyaki & Taiyaki ke kebutuhan gramasi bahan baku.</p>
-                            <span class="badge bg-primary-subtle text-primary">Otomatis Aktif</span>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="p-3 bg-light rounded-3 border h-100">
-                            <div class="fw-bold text-warning mb-1"><i class="fas fa-shield-halved me-1"></i> 3. Dynamic Safety Stock</div>
-                            <p class="small text-muted mb-2">Cadangan buffer dihitung dinamis dari rata-rata konsumsi harian (1-2 hari buffer).</p>
-                            <a href="rekomendasi.html" class="btn btn-sm btn-outline-warning">Atur Buffer &rarr;</a>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="p-3 bg-light rounded-3 border h-100">
-                            <div class="fw-bold text-success mb-1"><i class="fas fa-print me-1"></i> 4. Cetak Lembar SPK</div>
-                            <p class="small text-muted mb-2">Dokumen resmi SPK siap dicetak dengan kop surat, alamat store, dan tanda tangan sah.</p>
-                            <a href="laporan.html" class="btn btn-sm btn-outline-success">Cetak Laporan &rarr;</a>
                         </div>
                     </div>
                 </div>
@@ -231,6 +191,13 @@
     document.addEventListener("DOMContentLoaded", function() {
         // Render Navbar
         Components.renderNavbar('dashboard');
+
+        // Dynamic Outlet Badge
+        const currentUser = GindacoDB.getCurrentUser();
+        const outletBadge = document.getElementById('dashOutletBadge');
+        if (outletBadge && currentUser && currentUser.outlet) {
+            outletBadge.innerText = currentUser.outlet;
+        }
 
         // Live Clock
         function updateClock() {

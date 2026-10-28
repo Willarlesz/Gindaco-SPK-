@@ -13,6 +13,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/custom.css">
+    <!-- Auth Guard: Proteksi Akses Sesi Login Gindaco SPK -->
+    <script>
+        (function() {
+            var session = localStorage.getItem('gindaco_current_user');
+            if (!session || session === 'null' || session === 'undefined') {
+                window.location.replace('login.html');
+            }
+        })();
+    </script>
 </head>
 <body class="bg-light">
 
@@ -22,23 +31,16 @@
     <div class="container-fluid px-lg-4 py-4">
 
         <!-- KOP SURAT PRINT RESMI -->
-        <div id="print-header-container"></div>
+        <div id="print-header-container" class="print-only d-none d-print-block"></div>
 
         <!-- PAGE HEADER -->
         <div class="page-header-box">
             <div>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-1 small">
-                        <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none text-muted">Dashboard</a></li>
-                        <li class="breadcrumb-item active text-danger fw-semibold" aria-current="page">Data Bahan Baku</li>
-                    </ol>
-                </nav>
+            
                 <h1 class="page-header-title">
-                    <i class="fas fa-boxes-stacked text-danger"></i> Data Master Bahan Baku &amp; Stok Gudang
+                    <i class="fas fa-boxes-stacked text-danger"></i> Data  Bahan Baku &amp;
                 </h1>
-                <p class="page-header-desc">
-                    Monitoring ketersediaan fisik bahan baku, ambang batas safety stock, dan satuan ukuran di Gindaco Artha Gading.
-                </p>
+            
             </div>
             <div class="d-flex gap-2">
                 <button onclick="window.print()" class="btn btn-soft">
@@ -138,7 +140,7 @@
         </div>
 
         <!-- FOOTER PRINT RESMI -->
-        <div id="print-footer-container"></div>
+        <div id="print-footer-container" class="print-only d-none d-print-block"></div>
 
     </div>
 

@@ -5,17 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logging Out - GINDACO SPK</title>
 </head>
-<body style="font-family: sans-serif; text-align: center; padding-top: 100px;">
-    <h3>Mengeluarkan akun dari sistem...</h3>
-    <script src="assets/js/db.js"></script>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: center; padding-top: 100px; background-color: #f8fafc;">
+    <div style="max-width: 400px; margin: 0 auto; padding: 24px; background: white; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+        <h4 style="margin: 0 0 10px 0; color: #1e293b;">Sesi Telah Diakhiri</h4>
+        <p style="color: #64748b; font-size: 14px; margin: 0;">Mengalihkan Anda ke halaman login...</p>
+    </div>
     <script>
-        if (window.GindacoDB) {
-            window.GindacoDB.logout();
-        }
+        try {
+            localStorage.removeItem('gindaco_current_user');
+        } catch (e) {}
         setTimeout(function() {
-            window.location.href = 'login.html';
-        }, 500);
+            window.location.replace('login.html?logout=1');
+        }, 300);
     </script>
 </body>
 </html>
-

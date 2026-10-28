@@ -32,6 +32,15 @@
             color: #047857 !important;
         }
     </style>
+    <!-- Auth Guard: Proteksi Akses Sesi Login Gindaco SPK -->
+    <script>
+        (function() {
+            var session = localStorage.getItem('gindaco_current_user');
+            if (!session || session === 'null' || session === 'undefined') {
+                window.location.replace('login.html');
+            }
+        })();
+    </script>
 </head>
 <body class="bg-light">
 
@@ -41,24 +50,14 @@
     <div class="container-fluid px-lg-4 py-4">
 
         <!-- KOP SURAT PRINT RESMI -->
-        <div id="print-header-container"></div>
+        <div id="print-header-container" class="print-only d-none d-print-block"></div>
 
         <!-- PAGE HEADER -->
         <div class="page-header-box">
             <div>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-1 small">
-                        <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none text-muted">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="weekly_forecast.html" class="text-decoration-none text-muted">Weekly Sales Forecast</a></li>
-                        <li class="breadcrumb-item active text-danger fw-semibold" aria-current="page">Rekomendasi SPK Bahan Baku</li>
-                    </ol>
-                </nav>
                 <h1 class="page-header-title">
                     <i class="fas fa-clipboard-check text-danger"></i> Rekomendasi Pengadaan Bahan Baku (Surat Pesanan Kebutuhan / SPK)
                 </h1>
-                <p class="page-header-desc">
-                    Sistem Pendukung Keputusan pengadaan bahan baku dengan <strong>Dynamic Safety Stock</strong> berbasis Forecast Mingguan: cadangan buffer fleksibel dan presisi tanpa risiko overstock.
-                </p>
             </div>
             <div class="d-flex gap-2">
                 <button onclick="window.print()" class="btn btn-soft">
@@ -85,9 +84,6 @@
                                     Buffer: 1 Hari (Default)
                                 </span>
                             </div>
-                            <p class="text-muted small mb-0">
-                                <code>Daily Usage = Forecast / 7</code> &bull; <code>Safety Stock = Daily Usage &times; Buffer Hari</code> &bull; <code>Target Stok = Forecast + Safety Stock</code>
-                            </p>
                         </div>
                     </div>
 
@@ -172,9 +168,6 @@
                     <h5 class="fw-bold mb-0 text-dark">
                         <i class="fas fa-table-list text-danger me-2"></i>Tabel Rekomendasi Pesanan Pengadaan (SPK)
                     </h5>
-                    <span class="text-muted small" id="rowCountText">
-                        Formula: <code>Target = Forecast + Safety Stock Dinamis</code> &bull; <code>Saran Order = Target - Stok Fisik</code> (Min: 0)
-                    </span>
                 </div>
 
                 <!-- Toolbar: Filter, Search, Reset, Save, Export -->
@@ -228,7 +221,7 @@
         </div>
         
         <!-- FOOTER PRINT RESMI -->
-        <div id="print-footer-container"></div>
+        <div id="print-footer-container" class="print-only d-none d-print-block"></div>
 
     </div>
 

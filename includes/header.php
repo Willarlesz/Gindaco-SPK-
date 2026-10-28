@@ -39,19 +39,19 @@ $user_is_manager = is_manager();
 </head>
 <body>
     <!-- MODERN NAVBAR -->
-    <nav class="navbar navbar-expand-xl navbar-custom sticky-top">
+    <nav class="navbar navbar-expand-xl navbar-gindaco sticky-top">
         <div class="container-fluid px-lg-4">
-            <a class="navbar-brand-custom" href="index.php">
-                <div class="bg-white px-2 py-1 rounded-2 shadow-sm d-flex align-items-center justify-content-center" style="height: 38px;">
-                    <img src="assets/img/gindaco_logo.webp" alt="Logo Gindaco" style="max-height: 26px; width: auto; object-fit: contain;">
-                </div>
-                <div>
-                    <h1 class="brand-text-title">GINDACO SPK</h1>
-                    <p class="brand-text-sub"><i class="fas fa-store me-1 text-warning"></i> Mall Artha Gading</p>
+            <a class="navbar-brand d-flex align-items-center gap-2" href="index.php">
+                <img src="assets/img/gindaco_logo.webp" alt="Logo Gindaco" class="brand-logo-img">
+                <div class="d-flex flex-column">
+                    <span class="brand-text-main">GINDACO SPK</span>
+                    <span class="brand-outlet-badge">
+                        <i class="fas fa-store me-1 text-muted"></i><?php echo htmlspecialchars($current_user['outlet'] ?? 'Gindaco Indonesia'); ?>
+                    </span>
                 </div>
             </a>
 
-            <button class="navbar-toggler text-white border-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
                 <i class="fas fa-bars"></i>
             </button>
 
@@ -72,8 +72,9 @@ $user_is_manager = is_manager();
                     </li>
                     <li class="nav-item">
                         <a class="nav-link-custom <?php echo ($active_page === 'weekly_forecast') ? 'active' : ''; ?>" href="weekly_forecast.php">
-                            <i class="fas fa-calendar-week text-warning"></i>
+                            <i class="fas fa-calendar-week"></i>
                             <span>Weekly Forecast</span>
+                            <span class="badge <?php echo ($active_page === 'weekly_forecast') ? 'bg-danger text-white' : 'bg-danger-subtle text-danger border border-danger-subtle'; ?> ms-1" style="font-size: 0.62rem; padding: 2px 5px; font-weight: 700;">New</span>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -83,47 +84,34 @@ $user_is_manager = is_manager();
                         </a>
                     </li>
 
-                    <!-- MENU KHUSUS MANAGER -->
-                    <?php if ($user_is_manager): ?>
                     <li class="nav-item">
                         <a class="nav-link-custom <?php echo ($active_page === 'bahan') ? 'active' : ''; ?>" href="bahan.php">
                             <i class="fas fa-boxes-stacked"></i>
                             <span>Data Bahan</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link-custom <?php echo ($active_page === 'import') ? 'active' : ''; ?>" href="import_csv.php">
-                            <i class="fas fa-file-csv"></i>
-                            <span>Import CSV</span>
-                        </a>
-                    </li>
-                    <?php endif; ?>
 
                     <li class="nav-item">
                         <a class="nav-link-custom <?php echo ($active_page === 'laporan') ? 'active' : ''; ?>" href="laporan.php">
                             <i class="fas fa-file-invoice"></i>
-                            <span>4 Laporan</span>
+                            <span>Laporan SPK</span>
                         </a>
                     </li>
                 </ul>
 
-                <div class="d-flex align-items-center ms-xl-3 ps-xl-3 border-start border-secondary pt-2 pt-xl-0 gap-2">
+                <div class="d-flex align-items-center ms-xl-3 ps-xl-3 border-start border-slate-200 pt-2 pt-xl-0 gap-2">
                     <?php if ($current_user): ?>
-                    <div class="user-chip text-white">
-                        <div class="user-avatar" style="<?php echo $user_is_manager ? 'background: linear-gradient(135deg, #c01b22, #ea580c);' : 'background: linear-gradient(135deg, #2563eb, #0891b2);'; ?>">
-                            <i class="fas <?php echo $user_is_manager ? 'fa-user-shield' : 'fa-user'; ?>"></i>
+                    <div class="user-pill">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
                         </div>
-                        <div class="d-none d-sm-block text-start" style="line-height: 1.2;">
-                            <span class="d-block fw-bold text-truncate" style="font-size: 0.8rem; max-width: 140px;" title="<?php echo htmlspecialchars($current_user['nama']); ?>">
-                                <?php echo htmlspecialchars($current_user['nama']); ?>
-                            </span>
-                            <span class="badge <?php echo $user_is_manager ? 'bg-danger' : 'bg-primary'; ?> px-2 py-0" style="font-size: 0.65rem; text-transform: uppercase;">
-                                <?php echo htmlspecialchars($current_user['level']); ?>
-                            </span>
+                        <div class="user-info">
+                            <span class="user-name"><?php echo htmlspecialchars($current_user['nama'] ?? 'User'); ?></span>
+                            <span class="user-role"><?php echo strtoupper($current_user['level'] ?? 'staff'); ?></span>
                         </div>
                     </div>
-                    <a href="logout.php" class="btn btn-sm btn-outline-light rounded-pill px-2 py-1" title="Keluar dari Akun">
-                        <i class="fas fa-arrow-right-from-bracket"></i>
+                    <a href="logout.php" class="btn btn-sm btn-outline-danger ms-1" title="Keluar">
+                        <i class="fas fa-right-from-bracket"></i>
                     </a>
                     <?php else: ?>
                     <a href="login.php" class="btn btn-sm btn-gindaco rounded-pill px-3 py-1">
@@ -131,6 +119,9 @@ $user_is_manager = is_manager();
                     </a>
                     <?php endif; ?>
                 </div>
+            </div>
+        </div>
+    </nav>
             </div>
         </div>
     </nav>

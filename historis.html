@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Historis Pemakaian - GINDACO Mall Artha Gading</title>
+    <title>Data Historis Pemakaian - GINDACO SPK</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -13,6 +13,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/custom.css">
+    <!-- Auth Guard: Proteksi Akses Sesi Login Gindaco SPK -->
+    <script>
+        (function() {
+            var session = localStorage.getItem('gindaco_current_user');
+            if (!session || session === 'null' || session === 'undefined') {
+                window.location.replace('login.html');
+            }
+        })();
+    </script>
 </head>
 <body class="bg-light">
 
@@ -22,33 +31,25 @@
     <div class="container-fluid px-lg-4 py-4">
 
         <!-- KOP SURAT PRINT RESMI -->
-        <div id="print-header-container"></div>
+        <div id="print-header-container" class="print-only d-none d-print-block"></div>
 
         <div class="page-header-box">
             <div>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-1 small">
-                        <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none text-muted">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="laporan.html" class="text-decoration-none text-muted">Laporan</a></li>
-                        <li class="breadcrumb-item active text-danger fw-semibold" aria-current="page">Data Historis</li>
-                    </ol>
-                </nav>
+            
                 <h1 class="page-header-title">
-                    <i class="fas fa-clock-rotate-left text-primary"></i> Data Historis Pemakaian Bahan Baku
+                    <i class="fas fa-clock-rotate-left text-primary"></i> Data Historis Pemakaian Bahan
                 </h1>
-                <p class="page-header-desc">
-                    Arsip data historis konsumsi bahan baku per periode bulanan sebagai baseline kalkulasi Single Exponential Smoothing.
-                </p>
+         
             </div>
             <div class="d-flex gap-2">
                 <button onclick="window.print()" class="btn btn-soft">
                     <i class="fas fa-print me-1"></i> Cetak Dokumen
                 </button>
-                <a href="import_csv.html" class="btn btn-outline-danger">
-                    <i class="fas fa-file-csv me-1"></i> Import CSV Baru
+                <a href="weekly_forecast.html#kelola-database" class="btn btn-outline-danger">
+                    <i class="fas fa-database me-1"></i> Kelola Database (Import CSV)
                 </a>
-                <a href="smoothing.html" class="btn btn-gindaco">
-                    <i class="fas fa-calculator me-1"></i> Hitung Smoothing
+                <a href="weekly_forecast.html" class="btn btn-gindaco">
+                    <i class="fas fa-calendar-week me-1"></i> Weekly Forecast
                 </a>
             </div>
         </div>
@@ -58,7 +59,7 @@
             <div class="modern-card-header flex-column flex-md-row gap-3">
                 <div>
                     <h5 class="fw-bold mb-0 text-dark">
-                        <i class="fas fa-database text-secondary me-2"></i>Tabel Riwayat Pemakaian Bahan Riil
+                        <i class="fas fa-database text-secondary me-2"></i>Tabel Riwayat Pemakaian Bahan
                     </h5>
                     <span class="text-muted small" id="rowCountText">Memuat riwayat historis...</span>
                 </div>
@@ -94,7 +95,7 @@
         </div>
 
         <!-- FOOTER PRINT RESMI -->
-        <div id="print-footer-container"></div>
+        <div id="print-footer-container" class="print-only d-none d-print-block"></div>
 
     </div>
 

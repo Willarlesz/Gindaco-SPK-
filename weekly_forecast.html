@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weekly Sales Forecasting - GINDACO Mall Artha Gading</title>
+    <title>Weekly Sales Forecasting - GINDACO SPK</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts Inter -->
+    <!-- Google Fonts Inter & JetBrains Mono -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/custom.css">
@@ -24,6 +24,15 @@
             border: 1px solid #facc15 !important;
         }
     </style>
+    <!-- Auth Guard: Proteksi Akses Sesi Login Gindaco SPK -->
+    <script>
+        (function() {
+            var session = localStorage.getItem('gindaco_current_user');
+            if (!session || session === 'null' || session === 'undefined') {
+                window.location.replace('login.html');
+            }
+        })();
+    </script>
 </head>
 <body class="bg-light">
 
@@ -33,83 +42,99 @@
     <div class="container-fluid px-lg-4 py-4">
 
         <!-- KOP SURAT PRINT RESMI -->
-        <div id="print-header-container"></div>
+        <div id="print-header-container" class="print-only d-none d-print-block"></div>
 
         <!-- PAGE HEADER -->
         <div class="page-header-box">
             <div>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-1 small">
-                        <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none text-muted">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="smoothing.html" class="text-decoration-none text-muted">Exponential Smoothing</a></li>
-                        <li class="breadcrumb-item active text-danger fw-semibold" aria-current="page">Weekly Sales Forecast</li>
-                    </ol>
-                </nav>
+            
                 <h1 class="page-header-title">
-                    <i class="fas fa-calendar-week text-danger"></i> Weekly Sales Forecasting with Exponential Smoothing
+                    <i class="fas fa-calendar-week text-danger"></i> Weekly Sales Forecasting &amp; SPK Engine
                 </h1>
-                <p class="page-header-desc">
-                    Unggah 2 dataset penjualan POS/ERP mingguan, terapkan rumus Single Exponential Smoothing secara reaktif, dan sesuaikan angka dengan koreksi manual secara fleksibel.
-                </p>
+        
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" onclick="openModalImportWeekly()" class="btn btn-danger fw-semibold">
+                    <i class="fas fa-file-arrow-up me-1"></i> Import CSV Penjualan
+                </button>
+                <a href="#kelola-database" class="btn btn-outline-primary fw-semibold">
+                    <i class="fas fa-database me-1"></i> Kelola Database POS
+                </a>
                 <button onclick="window.print()" class="btn btn-soft">
                     <i class="fas fa-print me-1"></i> Cetak Laporan
                 </button>
                 <a href="rekomendasi.html" class="btn btn-gindaco fw-bold">
-                    <i class="fas fa-clipboard-check me-1"></i> Rekomendasi SPK Bahan Baku
-                </a>
-                <a href="smoothing.html" class="btn btn-outline-danger">
-                    <i class="fas fa-calculator me-1"></i> Smoothing Bulanan
+                    <i class="fas fa-clipboard-check me-1"></i> Rekomendasi SPK Bahan &rarr;
                 </a>
             </div>
         </div>
 
         <!-- NOTIFIKASI TOAST / ALERT STATUS -->
-        <div id="statusAlertContainer"></div>
+        <div id="statusAlertContainer" class="no-print"></div>
 
         <!-- CARD FORM UPLOAD 2 FILE CSV & PARAMETER -->
         <div class="modern-card mb-4 no-print">
-            <div class="modern-card-header d-flex justify-content-between align-items-center">
-                <h5 class="fw-bold mb-0 text-dark">
-                    <i class="fas fa-upload text-danger me-2"></i>Unggah Dataset Penjualan POS &amp; Parameter Peramalan
-                </h5>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadSampleDatasets()">
-                        <i class="fas fa-flask me-1"></i> Muat Sampel Demo CSV
-                    </button>
-                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 align-self-center">Client-Side Parser</span>
+            <div class="modern-card-header d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="fas fa-sliders text-danger me-2"></i>Sumber Dataset Penjualan &amp; Parameter Peramalan
+                    </h5>
                 </div>
+    
             </div>
             <div class="modern-card-body p-4">
                 <form id="weeklyForecastForm" onsubmit="event.preventDefault(); processAndMergeDatasets();">
                     <div class="row g-4">
-                        <!-- File Minggu 1 -->
+                        <!-- File Minggu 1 (W1) -->
                         <div class="col-md-6">
                             <div class="p-3 bg-light rounded-3 border h-100">
-                                <label class="form-label fw-bold text-dark small text-uppercase d-flex align-items-center justify-content-between">
-                                    <span><i class="fas fa-file-csv text-primary me-1"></i> File 1: Aktual Minggu Lalu (F<sub>t</sub> / Baseline)</span>
-                                    <span class="badge bg-primary">Dataset Historis</span>
+                                <label class="form-label fw-bold text-dark small text-uppercase d-flex align-items-center justify-content-between mb-2">
+                                    <span><i class="fas fa-calendar-minus text-primary me-1"></i> File 1: Aktual Minggu Lalu (F<sub>t</sub> / Baseline)</span>
+                                    <span class="badge bg-primary" id="badgeW1Role">Aktif: W-1</span>
                                 </label>
-                                <input type="file" id="fileWeek1Input" class="form-control mb-2" accept=".csv,text/csv,text/plain">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted small" style="font-size: 0.75rem;">Total kuantitas barang minggu lalu.</span>
-                                    <span class="small fw-semibold text-primary" id="statusFile1">Belum dipilih</span>
+                                
+                                <div class="mb-2">
+                                    <label class="small text-muted mb-1">Pilih dari Database Tersimpan:</label>
+                                    <select class="form-select form-select-sm font-monospace fw-semibold" id="selectDataset1" onchange="onSelectSavedDataset(1, this.value)">
+                                        <!-- Diisi daftar dataset via JS -->
+                                    </select>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="small text-muted mb-1">Atau Unggah File CSV Baru:</label>
+                                    <input type="file" id="fileWeek1Input" class="form-control form-control-sm" accept=".csv,text/csv,text/plain">
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center pt-1 border-top">
+                                    <span class="text-muted small" style="font-size: 0.75rem;">Status Dataset:</span>
+                                    <span class="small fw-semibold text-primary" id="statusFile1">Memuat...</span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- File Minggu 2 -->
+                        <!-- File Minggu 2 (W2) -->
                         <div class="col-md-6">
                             <div class="p-3 bg-light rounded-3 border h-100">
-                                <label class="form-label fw-bold text-dark small text-uppercase d-flex align-items-center justify-content-between">
-                                    <span><i class="fas fa-file-csv text-success me-1"></i> File 2: Aktual Minggu Sekarang (A<sub>t</sub> / Riil Terbaru)</span>
-                                    <span class="badge bg-success">Dataset Aktual</span>
+                                <label class="form-label fw-bold text-dark small text-uppercase d-flex align-items-center justify-content-between mb-2">
+                                    <span><i class="fas fa-calendar-check text-success me-1"></i> File 2: Aktual Minggu Sekarang (A<sub>t</sub> / Riil Terbaru)</span>
+                                    <span class="badge bg-success" id="badgeW2Role">Aktif: W-0</span>
                                 </label>
-                                <input type="file" id="fileWeek2Input" class="form-control mb-2" accept=".csv,text/csv,text/plain">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted small" style="font-size: 0.75rem;">Total kuantitas barang minggu sekarang.</span>
-                                    <span class="small fw-semibold text-success" id="statusFile2">Belum dipilih</span>
+
+                                <div class="mb-2">
+                                    <label class="small text-muted mb-1">Pilih dari Database Tersimpan:</label>
+                                    <select class="form-select form-select-sm font-monospace fw-semibold" id="selectDataset2" onchange="onSelectSavedDataset(2, this.value)">
+                                        <!-- Diisi daftar dataset via JS -->
+                                    </select>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="small text-muted mb-1">Atau Unggah File CSV Baru:</label>
+                                    <input type="file" id="fileWeek2Input" class="form-control form-control-sm" accept=".csv,text/csv,text/plain">
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center pt-1 border-top">
+                                    <span class="text-muted small" style="font-size: 0.75rem;">Status Dataset:</span>
+                                    <span class="small fw-semibold text-success" id="statusFile2">Memuat...</span>
                                 </div>
                             </div>
                         </div>
@@ -134,27 +159,15 @@
                         </div>
 
                         <!-- Info Formula & Aturan Void -->
-                        <div class="col-lg-6">
-                            <div class="p-3 bg-white rounded-3 border h-100">
-                                <div class="d-flex align-items-center justify-content-between mb-2">
-                                    <strong class="small text-dark"><i class="fas fa-filter text-danger me-1"></i>Aturan Pembersihan &amp; Rumus:</strong>
-                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Filter Void: True Diabaikan</span>
-                                </div>
-                                <div class="text-muted small" style="font-size: 0.75rem; line-height: 1.45;">
-                                    &bull; Kolom Wajib: <code>article_code</code>, <code>quantity</code>.<br>
-                                    &bull; Kolom Opsional: <code>article_name</code>, <code>void</code>, <code>created_date</code>.<br>
-                                    &bull; Formula Baku: <span class="fw-bold font-monospace text-danger">F<sub>t+1</sub> = (&alpha; &middot; A<sub>t</sub>) + ((1 - &alpha;) &middot; F<sub>t</sub>)</span>
-                                </div>
-                            </div>
-                        </div>
+                        
                     </div>
 
-                    <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+                    <div class="mt-4 pt-3 border-top d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
                         <span class="text-muted small" id="reactiveStatusText">
-                            <i class="fas fa-bolt text-warning me-1"></i> Sistem otomatis memproses data begitu kedua file CSV dipilih.
+                            <i class="fas fa-bolt text-warning me-1"></i> Perhitungan diperbarui secara otomatis setiap ada perubahan file atau dataset.
                         </span>
                         <button type="button" class="btn btn-gindaco px-4 py-2 fw-bold shadow-sm" onclick="processAndMergeDatasets()">
-                            <i class="fas fa-arrows-rotate me-1"></i> Proses &amp; Hitung Forecasting
+                            <i class="fas fa-arrows-rotate me-1"></i> Hitung Ulang Forecasting &amp; BOM
                         </button>
                     </div>
                 </form>
@@ -162,10 +175,10 @@
         </div>
 
         <!-- AREA HASIL: SUMMARY CARDS & TABEL INTERAKTIF -->
-        <div id="forecastResultsContainer" style="display: none;">
+        <div id="forecastResultsContainer">
 
             <!-- SINKRONISASI RECIPE EXPLOSION KE SPK BANNER -->
-            <div id="spkSyncStatusBanner" style="display: none;"></div>
+            <div id="spkSyncStatusBanner"></div>
 
             <!-- 4 SUMMARY CARDS -->
             <div class="row g-3 mb-4">
@@ -183,7 +196,7 @@
                 <div class="col-md-3">
                     <div class="stat-card stat-secondary py-3">
                         <div>
-                            <p class="stat-label mb-1">Total Quantity Minggu Lalu</p>
+                            <p class="stat-label mb-1">Total Qty Minggu Lalu (W-1)</p>
                             <h4 class="stat-value mb-0 fs-3"><span id="sumQtyW1">0</span> <span class="fs-6 fw-normal text-muted">Pcs</span></h4>
                         </div>
                         <div class="stat-icon-wrapper">
@@ -194,7 +207,7 @@
                 <div class="col-md-3">
                     <div class="stat-card stat-success py-3">
                         <div>
-                            <p class="stat-label mb-1">Total Quantity Minggu Sekarang</p>
+                            <p class="stat-label mb-1">Total Qty Minggu Sekarang (W-0)</p>
                             <h4 class="stat-value mb-0 fs-3"><span id="sumQtyW2">0</span> <span class="fs-6 fw-normal text-muted">Pcs</span></h4>
                         </div>
                         <div class="stat-icon-wrapper">
@@ -264,25 +277,213 @@
 
         </div>
 
-        <!-- EMPTY PLACEHOLDER STATE -->
-        <div class="modern-card p-5 text-center my-4" id="emptyPlaceholderCard">
-            <div class="brand-icon mx-auto mb-3" style="width: 64px; height: 64px; font-size: 1.8rem; background: #fee2e2; color: #dc2626;">
-                <i class="fas fa-file-csv"></i>
+        <!-- ============================================================== -->
+        <!-- KELOLA DATABASE PENJUALAN (FILE TRACKING & IN-APP EDITOR)      -->
+        <!-- ============================================================== -->
+        <div class="modern-card mb-4 no-print" id="kelola-database">
+            <div class="modern-card-header flex-column flex-md-row gap-3">
+                <div>
+                    <h5 class="fw-bold mb-1 text-dark">
+                        <i class="fas fa-database text-danger me-2"></i>Kelola Database Penjualan POS (File Tracking &amp; Editor)
+                    </h5>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-gindaco fw-semibold" onclick="openModalImportWeekly()">
+                        <i class="fas fa-file-arrow-up me-1"></i> Import CSV Baru
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetWeeklyDatasetsToDefault()" title="Kembalikan dataset ke pengaturan awal">
+                        <i class="fas fa-rotate-left me-1"></i> Reset Baseline Demo
+                    </button>
+                </div>
             </div>
-            <h5 class="fw-bold text-dark mb-2">Belum Ada Dataset Penjualan yang Dimuat</h5>
-            <p class="text-muted small mx-auto mb-3" style="max-width: 500px;">
-                Silakan pilih dua file CSV laporan penjualan mingguan POS Anda di atas untuk memulai kalkulasi otomatis Single Exponential Smoothing, atau klik tombol demo di bawah.
-            </p>
-            <div>
-                <button type="button" class="btn btn-outline-danger btn-sm px-3" onclick="loadSampleDatasets()">
-                    <i class="fas fa-flask me-1"></i> Muat Sampel Demo CSV (Week 1 & 2)
-                </button>
+
+            <div class="table-responsive">
+                <table class="table table-modern table-hover align-middle mb-0" id="tableWeeklyDatasets">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">No</th>
+                            <th style="width: 180px;">Label / Periode</th>
+                            <th>File Sumber CSV</th>
+                            <th style="width: 170px;">Waktu Unggah</th>
+                            <th style="width: 160px;" class="text-center">Volume Data</th>
+                            <th style="width: 180px;" class="text-center">Peran di Forecasting</th>
+                            <th style="width: 250px;" class="text-end">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="weeklyDatasetsTableBody">
+                        <!-- Diisi via JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-3 bg-light border-top d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+                <span class="small text-muted" id="datasetSummaryText">Memuat data database...</span>
+                <span class="small text-muted"><i class="fas fa-circle-info text-info me-1"></i>Perubahan data di tabel ini langsung memperbarui kalkulasi Weekly Forecast di atas.</span>
             </div>
         </div>
 
         <!-- FOOTER PRINT RESMI -->
-        <div id="print-footer-container"></div>
+        <div id="print-footer-container" class="print-only d-none d-print-block"></div>
 
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- MODAL 1: IMPORT CSV DATASET PENJUALAN                          -->
+    <!-- ============================================================== -->
+    <div class="modal fade" id="modalImportWeekly" tabindex="-1" aria-labelledby="modalImportWeeklyLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold text-dark" id="modalImportWeeklyLabel">
+                        <i class="fas fa-file-arrow-up text-danger me-2"></i>Import Dataset Penjualan POS
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formImportWeeklyModal" onsubmit="event.preventDefault(); saveImportedWeeklyDataset();">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-7">
+                                <label class="form-label small fw-bold text-uppercase text-muted">Nama / Label Dataset:</label>
+                                <input type="text" class="form-control font-monospace fw-semibold" id="importDatasetNameInput" placeholder="Contoh: Minggu 3 (15-21 Okt 2026)" required>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label small fw-bold text-uppercase text-muted">Terapkan Langsung Sebagai:</label>
+                                <select class="form-select font-monospace fw-semibold" id="importAssignRoleSelect">
+                                    <option value="w2" selected>Minggu Sekarang (A_t)</option>
+                                    <option value="w1">Minggu Lalu (F_t)</option>
+                                    <option value="none">Simpan ke Database Saja</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-bold text-uppercase text-muted mb-0">Pilih File CSV Penjualan POS:</label>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="loadSampleMonthlyCSVToModal()">
+                                    <i class="fas fa-wand-magic-sparkles text-warning me-1"></i>Muat Sampel POS 26 Okt 2026
+                                </button>
+                            </div>
+                            <input type="file" id="modalWeeklyCsvFileInput" class="form-control" accept=".csv,text/csv,text/plain" onchange="onModalWeeklyFileInputChange(event)">
+                            <span class="form-text text-muted small">Mendukung format POS Gindaco: <code>article_code</code>, <code>article_name</code>, <code>quantity</code>, <code>void</code>.</span>
+                        </div>
+
+                        <!-- Preview Area -->
+                        <div id="importWeeklyPreviewArea" class="p-3 bg-light rounded-3 border mb-3 d-none">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold text-dark small"><i class="fas fa-eye text-primary me-1"></i>Pratinjau Hasil Parsing CSV:</span>
+                                <span class="badge bg-success" id="importWeeklyPreviewBadge">Valid</span>
+                            </div>
+                            <div class="small text-muted mb-2" id="importWeeklyPreviewSummary"></div>
+                            <div class="table-responsive" style="max-height: 180px; overflow-y: auto;">
+                                <table class="table table-sm table-bordered bg-white mb-0">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>Kode Artikel</th>
+                                            <th>Nama Menu Penjualan</th>
+                                            <th class="text-end">Jumlah (Qty)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="importWeeklyPreviewTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-gindaco px-4 fw-bold" id="btnSubmitWeeklyImport" disabled>
+                                <i class="fas fa-check me-1"></i> Simpan Dataset &amp; Terapkan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- MODAL 2: IN-APP TABLE EDITOR (LIHAT / EDIT DATA DATASET)        -->
+    <!-- ============================================================== -->
+    <div class="modal fade" id="modalEditDataset" tabindex="-1" aria-labelledby="modalEditDatasetLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-light">
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark mb-0" id="modalEditDatasetLabel">
+                            <i class="fas fa-sliders text-danger me-2"></i>In-App Editor Data Penjualan: <span id="modalEditPeriodeTitle" class="text-primary font-monospace"></span>
+                        </h5>
+                        <span class="small text-muted">Sesuaikan kuantitas menu. Jika dataset ini aktif pada Weekly Forecast, kalkulasi forecasting dan BOM SPK akan otomatis diperbarui secara realtime.</span>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Top Toolbar inside modal -->
+                    <div class="row g-2 mb-3 align-items-center">
+                        <div class="col-md-5">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white text-muted"><i class="fas fa-search"></i></span>
+                                <input type="text" id="editMenuSearchInput" class="form-control" placeholder="Cari nama atau kode menu..." oninput="filterEditTable(this.value)">
+                            </div>
+                        </div>
+                        <div class="col-md-7 d-flex justify-content-md-end gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-success" onclick="toggleAddMenuRowForm()">
+                                <i class="fas fa-plus me-1"></i> Tambah Menu Penjualan
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Add menu inline form (toggleable) -->
+                    <div id="addMenuRowBox" class="p-3 bg-light rounded-3 border mb-3 d-none">
+                        <h6 class="fw-bold text-dark small mb-2"><i class="fas fa-plus-circle text-success me-1"></i>Tambah Item Menu ke Dataset</h6>
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-6">
+                                <select class="form-select form-select-sm" id="selectAddMenuId">
+                                    <!-- Diisi daftar menu -->
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="number" min="1" step="1" class="form-control form-control-sm" id="inputAddMenuQty" placeholder="Jumlah (Qty)" value="10">
+                            </div>
+                            <div class="col-md-3 d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-success w-100 fw-semibold" onclick="confirmAddMenuItem()">
+                                    <i class="fas fa-check me-1"></i> Tambahkan
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleAddMenuRowForm()">
+                                    Batal
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="table-responsive border rounded-3" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-modern table-hover align-middle mb-0">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th style="width: 50px;">No</th>
+                                    <th style="width: 140px;">Kode Artikel</th>
+                                    <th>Nama Menu Penjualan</th>
+                                    <th style="width: 160px;" class="text-end">Jumlah Terjual (Qty)</th>
+                                    <th style="width: 80px;" class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="editDatasetTableBody">
+                                <!-- Diisi via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                        <span class="small text-muted" id="editDatasetStatsText">Total 0 item menu</span>
+                        <span class="badge bg-primary-subtle text-primary font-monospace fs-6" id="editDatasetTotalQty">Total Qty: 0</span>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-gindaco px-4 fw-bold" onclick="saveEditedDataset()">
+                        <i class="fas fa-floppy-disk me-1"></i> Simpan Perubahan &amp; Hitung Ulang
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap 5 JS Bundle -->
@@ -295,20 +496,29 @@
     <script>
     let appForecastData = []; // [{ code, name, w1, w2, sysForecast, manualOverride }]
     let currentAlpha = 0.3;
-    let file1ParsedData = null; // { data: { [code]: { code, name, qty } } }
+    let file1ParsedData = null; // { data: { [code]: { code, name, qty } }, datasetId: null, label: '' }
     let file2ParsedData = null;
+    let stagedImportData = null;
+    let currentEditingPeriode = null;
+    let currentEditingItems = [];
 
     document.addEventListener("DOMContentLoaded", function() {
         Components.renderNavbar('weekly_forecast');
-        Components.renderPrintHeader('print-header-container', 'Laporan Peramalan Penjualan Mingguan (Weekly Sales Forecasting)', 'Metode Single Exponential Smoothing &bull; Outlet Mall Artha Gading &bull; ' + new Date().toLocaleDateString('id-ID'));
+        Components.renderPrintHeader('print-header-container', 'Laporan Peramalan Penjualan Mingguan (Weekly Sales Forecasting)', 'Metode Single Exponential Smoothing &bull; Outlet: ' + (GindacoDB.getCurrentUser()?.outlet || 'Gindaco Indonesia') + ' &bull; ' + new Date().toLocaleDateString('id-ID'));
         Components.renderPrintFooter('print-footer-container');
+
+        // Render Database Table & Dropdowns
+        renderWeeklyDatasetsTable();
+        populateSavedDatasetDropdowns();
+
+        // Auto-load default active datasets (Week 1 & Week 2) so user immediately gets full dashboard view
+        initDefaultWeeklyDatasets();
 
         // File listener File 1
         const file1Input = document.getElementById('fileWeek1Input');
         const file2Input = document.getElementById('fileWeek2Input');
         const statusFile1 = document.getElementById('statusFile1');
         const statusFile2 = document.getElementById('statusFile2');
-        const reactiveStatus = document.getElementById('reactiveStatusText');
 
         file1Input.addEventListener('change', async function() {
             if (!this.files || this.files.length === 0) return;
@@ -317,11 +527,12 @@
             try {
                 const text = await readFileAsText(file);
                 file1ParsedData = parseWeeklyCSVClient(text, file.name);
-                statusFile1.innerHTML = `<i class="fas fa-check-circle text-success me-1"></i>${file1ParsedData.uniqueItemCount} item`;
+                file1ParsedData.label = file.name;
+                statusFile1.innerHTML = `<i class="fas fa-check-circle text-success me-1"></i>${file1ParsedData.uniqueItemCount} item (${file.name})`;
+                document.getElementById('selectDataset1').value = "";
+                renderWeeklyDatasetsTable();
                 if (file2ParsedData) {
                     processAndMergeDatasets();
-                } else {
-                    reactiveStatus.innerHTML = `<i class="fas fa-info-circle text-info me-1"></i>File 1 selesai dimuat (${file1ParsedData.uniqueItemCount} item). Silakan pilih File 2.`;
                 }
             } catch (err) {
                 statusFile1.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle"></i> Error</span>`;
@@ -336,11 +547,12 @@
             try {
                 const text = await readFileAsText(file);
                 file2ParsedData = parseWeeklyCSVClient(text, file.name);
-                statusFile2.innerHTML = `<i class="fas fa-check-circle text-success me-1"></i>${file2ParsedData.uniqueItemCount} item`;
+                file2ParsedData.label = file.name;
+                statusFile2.innerHTML = `<i class="fas fa-check-circle text-success me-1"></i>${file2ParsedData.uniqueItemCount} item (${file.name})`;
+                document.getElementById('selectDataset2').value = "";
+                renderWeeklyDatasetsTable();
                 if (file1ParsedData) {
                     processAndMergeDatasets();
-                } else {
-                    reactiveStatus.innerHTML = `<i class="fas fa-info-circle text-info me-1"></i>File 2 selesai dimuat (${file2ParsedData.uniqueItemCount} item). Silakan pilih File 1.`;
                 }
             } catch (err) {
                 statusFile2.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle"></i> Error</span>`;
@@ -348,7 +560,7 @@
             }
         });
 
-        // Search filter
+        // Search filter in forecast table
         const searchInput = document.getElementById('searchTableInput');
         if (searchInput) {
             searchInput.addEventListener('input', function() {
@@ -366,7 +578,95 @@
                 document.getElementById('tableItemCountText').innerText = `Menampilkan ${count} dari ${appForecastData.length} item barang`;
             });
         }
+
+        // Check hash
+        if (window.location.hash === '#kelola-database') {
+            setTimeout(() => {
+                const el = document.getElementById('kelola-database');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
     });
+
+    // Auto-load initial datasets from GindacoDB
+    function initDefaultWeeklyDatasets() {
+        const datasets = GindacoDB.getMonthlyDatasets();
+        if (datasets.length >= 2) {
+            applySavedDataset(1, datasets[0].periode, false);
+            applySavedDataset(2, datasets[1].periode, false);
+            processAndMergeDatasets();
+        } else if (datasets.length === 1) {
+            applySavedDataset(1, datasets[0].periode, false);
+            applySavedDataset(2, datasets[0].periode, false);
+            processAndMergeDatasets();
+        }
+    }
+
+    function populateSavedDatasetDropdowns() {
+        const datasets = GindacoDB.getMonthlyDatasets();
+        const sel1 = document.getElementById('selectDataset1');
+        const sel2 = document.getElementById('selectDataset2');
+        if (!sel1 || !sel2) return;
+
+        const currentVal1 = sel1.value;
+        const currentVal2 = sel2.value;
+
+        const optionsHtml = `<option value="">-- Pilih dari Database Tersimpan --</option>` + datasets.map(d => `
+            <option value="${d.periode}">${d.periode} (${(d.menu_sales || []).length} Menu)</option>
+        `).join('');
+
+        sel1.innerHTML = optionsHtml;
+        sel2.innerHTML = optionsHtml;
+
+        if (currentVal1) sel1.value = currentVal1;
+        if (currentVal2) sel2.value = currentVal2;
+    }
+
+    function onSelectSavedDataset(weekNum, periode) {
+        if (!periode) return;
+        applySavedDataset(weekNum, periode, true);
+    }
+
+    function applySavedDataset(weekNum, periode, triggerForecast = true) {
+        const ds = GindacoDB.getMonthlyDataset(periode);
+        if (!ds) return;
+
+        const menuMap = {};
+        (ds.menu_sales || []).forEach(it => {
+            menuMap[it.code] = {
+                code: it.code,
+                name: it.name || it.code,
+                qty: parseFloat(it.qty) || 0
+            };
+        });
+
+        const parsedData = {
+            data: menuMap,
+            datasetPeriode: ds.periode,
+            label: ds.periode,
+            uniqueItemCount: Object.keys(menuMap).length,
+            totalRows: ds.raw_row_count || Object.keys(menuMap).length
+        };
+
+        if (weekNum === 1) {
+            file1ParsedData = parsedData;
+            document.getElementById('statusFile1').innerHTML = `<i class="fas fa-check-circle text-primary me-1"></i>${parsedData.uniqueItemCount} menu (${ds.periode})`;
+            document.getElementById('selectDataset1').value = ds.periode;
+            document.getElementById('fileWeek1Input').value = "";
+        } else {
+            file2ParsedData = parsedData;
+            document.getElementById('statusFile2').innerHTML = `<i class="fas fa-check-circle text-success me-1"></i>${parsedData.uniqueItemCount} menu (${ds.periode})`;
+            document.getElementById('selectDataset2').value = ds.periode;
+            document.getElementById('fileWeek2Input').value = "";
+        }
+
+        renderWeeklyDatasetsTable();
+
+        if (triggerForecast && file1ParsedData && file2ParsedData) {
+            processAndMergeDatasets();
+            showAppAlert(`Dataset <strong>${ds.periode}</strong> berhasil diterapkan sebagai Minggu ${weekNum === 1 ? 'Lalu (F_t)' : 'Sekarang (A_t)'} dan Weekly Forecast telah diperbarui!`, 'success');
+        }
+    }
 
     function onAlphaChange(val) {
         currentAlpha = parseFloat(val);
@@ -385,9 +685,10 @@
 
     function showAppAlert(message, type = 'danger') {
         const container = document.getElementById('statusAlertContainer');
+        const icon = type === 'danger' ? 'fa-circle-exclamation' : (type === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-check');
         container.innerHTML = `
             <div class="alert alert-${type} alert-dismissible fade show shadow-sm mb-4" role="alert">
-                <i class="fas ${type === 'danger' ? 'fa-circle-exclamation' : 'fa-circle-check'} me-2 fs-5"></i>
+                <i class="fas ${icon} me-2 fs-5"></i>
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -454,18 +755,18 @@
             totalRows++;
 
             if (colVoid !== -1) {
-                const vVal = (row[colVoid] || '').trim().toLowerCase();
+                const vVal = (row[colVoid] || '').trim().toLowerCase().replace(/["']/g, '');
                 if (['true', '1', 't', 'yes', 'y'].includes(vVal)) {
                     voidRowsIgnored++;
                     continue;
                 }
             }
 
-            const code = (row[colCode] || '').trim();
+            const code = (row[colCode] || '').trim().replace(/["']/g, '');
             if (!code) continue;
 
-            const name = (colName !== -1 && row[colName]) ? row[colName].trim() : code;
-            const qtyRaw = (row[colQty] || '0').trim().replace(/,/g, '.');
+            const name = (colName !== -1 && row[colName]) ? row[colName].trim().replace(/["']/g, '') : code;
+            const qtyRaw = (row[colQty] || '0').trim().replace(/["']/g, '').replace(/,/g, '.');
             const qty = parseFloat(qtyRaw) || 0;
 
             if (!aggregated[code]) {
@@ -518,11 +819,6 @@
 
         renderForecastTable();
 
-        document.getElementById('forecastResultsContainer').style.display = 'block';
-        document.getElementById('emptyPlaceholderCard').style.display = 'none';
-
-        showAppAlert(`Berhasil menggabungkan dataset penjualan: <strong>${appForecastData.length} menu</strong> terhitung menggunakan Single Exponential Smoothing (&alpha; = ${currentAlpha.toFixed(2)}).`, 'success');
-
         // Pure Client-Side Recipe Explosion to SPK Materials
         syncSalesToSPKMaterials(dataW1, dataW2);
     }
@@ -533,7 +829,7 @@
 
         banner.style.display = 'flex';
         banner.className = 'alert alert-info py-2 px-3 small rounded-3 mb-3 d-flex align-items-center justify-content-between';
-        banner.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Mengonversi menu penjualan ke kebutuhan Bahan Baku via BOM Recipe Explosion...`;
+        banner.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Mengonversi estimasi menu penjualan ke kebutuhan Bahan Baku via BOM Recipe Explosion...`;
 
         setTimeout(() => {
             try {
@@ -542,7 +838,7 @@
                 banner.innerHTML = `
                     <div>
                         <i class="fas fa-check-circle text-success me-1"></i>
-                        <strong>Recipe Explosion Berhasil:</strong> ${spkState.materials.length} Bahan Baku telah diperbarui untuk pesanan SPK Mingguan.
+                        <strong>Recipe Explosion Berhasil:</strong> Kebutuhan ${spkState.materials.length} Bahan Baku telah diperbarui untuk rekomendasi pesanan SPK Mingguan.
                     </div>
                     <a href="rekomendasi.html" class="btn btn-sm btn-gindaco fw-bold px-3 py-1">
                         <i class="fas fa-clipboard-check me-1"></i> Buka Rekomendasi SPK Bahan Baku &rarr;
@@ -553,7 +849,7 @@
                 banner.className = 'alert alert-danger py-2 px-3 small rounded-3 mb-3';
                 banner.innerHTML = `Gagal menjalankan Recipe Explosion: ${e.message}`;
             }
-        }, 150);
+        }, 120);
     }
 
     function recalculateForecasts() {
@@ -609,7 +905,7 @@
         document.getElementById('sumQtyW1').innerText = sumW1.toLocaleString('id-ID');
         document.getElementById('sumQtyW2').innerText = sumW2.toLocaleString('id-ID');
         document.getElementById('sumFinalForecast').innerText = sumFinal.toLocaleString('id-ID');
-        document.getElementById('tableItemCountText').innerText = `Menampilkan ${appForecastData.length} item barang (α = ${currentAlpha.toFixed(2)})`;
+        document.getElementById('tableItemCountText').innerText = `Menampilkan ${appForecastData.length} item menu penjualan (α = ${currentAlpha.toFixed(2)})`;
     }
 
     function onManualOverrideInput(inputEl, idx) {
@@ -668,7 +964,6 @@
         document.body.removeChild(link);
     }
 
-    // Helper demo data loader from sample_week1.csv and sample_week2.csv or built-in mock
     async function loadSampleDatasets() {
         try {
             document.getElementById('statusFile1').innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>Memuat sampel...`;
@@ -680,18 +975,430 @@
             const t2 = await r2.text();
 
             file1ParsedData = parseWeeklyCSVClient(t1, 'sample_week1.csv');
+            file1ParsedData.label = 'sample_week1.csv';
             file2ParsedData = parseWeeklyCSVClient(t2, 'sample_week2.csv');
+            file2ParsedData.label = 'sample_week2.csv';
 
-            document.getElementById('statusFile1').innerHTML = `<i class="fas fa-check-circle text-success me-1"></i>${file1ParsedData.uniqueItemCount} item (Demo)`;
-            document.getElementById('statusFile2').innerHTML = `<i class="fas fa-check-circle text-success me-1"></i>${file2ParsedData.uniqueItemCount} item (Demo)`;
+            document.getElementById('statusFile1').innerHTML = `<i class="fas fa-check-circle text-success me-1"></i>${file1ParsedData.uniqueItemCount} item (Demo W1)`;
+            document.getElementById('statusFile2').innerHTML = `<i class="fas fa-check-circle text-success me-1"></i>${file2ParsedData.uniqueItemCount} item (Demo W2)`;
 
             processAndMergeDatasets();
+            showAppAlert('Sampel demo Week 1 & Week 2 berhasil dimuat dan dihitung ulang!', 'success');
         } catch (e) {
             console.error(e);
             alert('Gagal memuat sampel CSV: ' + e.message);
         }
     }
+
+    // ==============================================================
+    // KELOLA DATABASE PENJUALAN (FILE TRACKING & IN-APP EDITOR)
+    // ==============================================================
+
+    function renderWeeklyDatasetsTable() {
+        const datasets = GindacoDB.getMonthlyDatasets();
+        const tbody = document.getElementById('weeklyDatasetsTableBody');
+        if (!tbody) return;
+
+        if (datasets.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">
+                        <i class="fas fa-folder-open fs-2 mb-2 d-block text-secondary opacity-50"></i>
+                        Belum ada dataset penjualan tersimpan. Klik tombol <strong>Import CSV Baru</strong> di atas untuk menambahkan.
+                    </td>
+                </tr>
+            `;
+            document.getElementById('datasetSummaryText').innerText = 'Total 0 dataset aktif.';
+            return;
+        }
+
+        tbody.innerHTML = datasets.map((ds, idx) => {
+            const uploadDate = new Date(ds.uploaded_at);
+            const dateStr = !isNaN(uploadDate) ? uploadDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+            const totalMenuItems = (ds.menu_sales && Array.isArray(ds.menu_sales)) ? ds.menu_sales.length : 0;
+            const totalQty = (ds.menu_sales && Array.isArray(ds.menu_sales)) ? ds.menu_sales.reduce((acc, it) => acc + (parseFloat(it.qty) || 0), 0) : 0;
+
+            const isW1 = file1ParsedData && (file1ParsedData.datasetPeriode === ds.periode || file1ParsedData.label === ds.periode || file1ParsedData.label === ds.filename);
+            const isW2 = file2ParsedData && (file2ParsedData.datasetPeriode === ds.periode || file2ParsedData.label === ds.periode || file2ParsedData.label === ds.filename);
+
+            let roleBadge = `<span class="badge bg-light text-muted border py-1 px-2">Tersimpan</span>`;
+            if (isW1 && isW2) {
+                roleBadge = `<span class="badge bg-purple text-white py-1 px-2" style="background:#7c3aed;">Aktif: W1 &amp; W2</span>`;
+            } else if (isW1) {
+                roleBadge = `<span class="badge bg-primary text-white py-1 px-2"><i class="fas fa-check me-1"></i>Aktif: W-1 (Lalu)</span>`;
+            } else if (isW2) {
+                roleBadge = `<span class="badge bg-success text-white py-1 px-2"><i class="fas fa-check me-1"></i>Aktif: W-0 (Sekarang)</span>`;
+            }
+
+            return `
+                <tr>
+                    <td class="text-muted fw-semibold">${idx + 1}</td>
+                    <td>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle fs-6 font-monospace py-1 px-2">
+                            <i class="fas fa-calendar-alt me-1"></i>${ds.periode}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-file-csv text-success fs-5 me-2"></i>
+                            <div>
+                                <span class="fw-semibold text-dark font-monospace small">${ds.filename || 'POS_Export.csv'}</span>
+                                <div class="text-muted" style="font-size: 0.75rem;">${ds.raw_row_count ? ds.raw_row_count.toLocaleString('id-ID') + ' baris POS' : 'Raw POS'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <small class="text-muted"><i class="far fa-clock me-1"></i>${dateStr}</small>
+                    </td>
+                    <td class="text-center">
+                        <span class="fw-bold text-dark font-monospace">${totalMenuItems}</span> <span class="small text-muted">Menu</span>
+                        <div class="text-muted" style="font-size: 0.75rem;">(${totalQty.toLocaleString('id-ID')} unit)</div>
+                    </td>
+                    <td class="text-center">
+                        ${roleBadge}
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-outline-primary" onclick="applySavedDataset(1, '${ds.periode}', true)" title="Terapkan sebagai Minggu Lalu (W1)">
+                                Set W1
+                            </button>
+                            <button type="button" class="btn btn-outline-success" onclick="applySavedDataset(2, '${ds.periode}', true)" title="Terapkan sebagai Minggu Sekarang (W2)">
+                                Set W2
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="openModalEditDataset('${ds.periode}')" title="Lihat dan edit kuantitas menu">
+                                <i class="fas fa-pen-to-square"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" onclick="confirmDeleteWeeklyDataset('${ds.periode}')" title="Hapus dataset dari sistem">
+                                <i class="fas fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        document.getElementById('datasetSummaryText').innerText = `Total ${datasets.length} dataset penjualan aktif di sistem.`;
+    }
+
+    function openModalImportWeekly() {
+        stagedImportData = null;
+        document.getElementById('formImportWeeklyModal').reset();
+        document.getElementById('importWeeklyPreviewArea').classList.add('d-none');
+        document.getElementById('btnSubmitWeeklyImport').disabled = true;
+
+        const d = new Date();
+        document.getElementById('importDatasetNameInput').value = `Minggu ${Math.ceil(d.getDate() / 7)} (${d.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })})`;
+
+        const modalEl = document.getElementById('modalImportWeekly');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+    }
+
+    async function loadSampleMonthlyCSVToModal() {
+        try {
+            const resp = await fetch('sample_monthly_sales.csv');
+            if (!resp.ok) throw new Error('File sample_monthly_sales.csv tidak ditemukan di server.');
+            const text = await resp.text();
+
+            const parsed = GindacoDB.parseMonthlyPOSCSV(text);
+            document.getElementById('importDatasetNameInput').value = 'POS Transaksi 26 Okt 2026';
+
+            stagedImportData = {
+                text: text,
+                parsed: parsed,
+                filename: 'sample_monthly_sales.csv'
+            };
+
+            showImportWeeklyPreview(parsed, 'sample_monthly_sales.csv');
+            document.getElementById('btnSubmitWeeklyImport').disabled = false;
+        } catch (err) {
+            alert('Gagal memuat sampel CSV: ' + err.message);
+        }
+    }
+
+    function onModalWeeklyFileInputChange(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            try {
+                const text = evt.target.result;
+                const parsed = GindacoDB.parseMonthlyPOSCSV(text);
+
+                if (parsed.suggestedPeriode) {
+                    document.getElementById('importDatasetNameInput').value = parsed.suggestedPeriode;
+                }
+
+                stagedImportData = {
+                    text: text,
+                    parsed: parsed,
+                    filename: file.name
+                };
+
+                showImportWeeklyPreview(parsed, file.name);
+                document.getElementById('btnSubmitWeeklyImport').disabled = false;
+            } catch(err) {
+                alert('File CSV tidak dapat diproses: ' + err.message);
+                document.getElementById('importWeeklyPreviewArea').classList.add('d-none');
+                document.getElementById('btnSubmitWeeklyImport').disabled = true;
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function showImportWeeklyPreview(parsed, filename) {
+        const area = document.getElementById('importWeeklyPreviewArea');
+        const summary = document.getElementById('importWeeklyPreviewSummary');
+        const tbody = document.getElementById('importWeeklyPreviewTableBody');
+
+        const totalQty = parsed.menuSalesArray.reduce((acc, it) => acc + (it.qty || 0), 0);
+        summary.innerHTML = `File: <strong>${filename}</strong> &bull; Terdeteksi <strong>${parsed.totalRawRows}</strong> baris transaksi valid &bull; <strong>${parsed.menuSalesArray.length}</strong> jenis menu &bull; Total: <strong>${totalQty.toLocaleString('id-ID')} unit</strong>.`;
+
+        tbody.innerHTML = parsed.menuSalesArray.slice(0, 10).map(m => `
+            <tr>
+                <td class="font-monospace small">${m.code}</td>
+                <td>${m.name}</td>
+                <td class="text-end font-monospace fw-bold">${m.qty.toLocaleString('id-ID')}</td>
+            </tr>
+        `).join('');
+
+        if (parsed.menuSalesArray.length > 10) {
+            tbody.innerHTML += `<tr><td colspan="3" class="text-center text-muted small py-1">... dan ${parsed.menuSalesArray.length - 10} menu lainnya</td></tr>`;
+        }
+
+        area.classList.remove('d-none');
+    }
+
+    function saveImportedWeeklyDataset() {
+        if (!stagedImportData) {
+            alert('Silakan pilih atau muat file CSV terlebih dahulu!');
+            return;
+        }
+
+        const datasetName = document.getElementById('importDatasetNameInput').value.trim();
+        const role = document.getElementById('importAssignRoleSelect').value;
+
+        try {
+            const saved = GindacoDB.saveMonthlyDataset(
+                datasetName,
+                stagedImportData.filename,
+                stagedImportData.parsed.menuSalesMap,
+                stagedImportData.parsed.totalRawRows
+            );
+
+            // Close modal
+            const modalEl = document.getElementById('modalImportWeekly');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+
+            // Refresh UI
+            populateSavedDatasetDropdowns();
+            renderWeeklyDatasetsTable();
+
+            // If user chose to immediately apply as W1 or W2
+            if (role === 'w1') {
+                applySavedDataset(1, saved.periode, true);
+            } else if (role === 'w2') {
+                applySavedDataset(2, saved.periode, true);
+            } else {
+                showAppAlert(`Dataset <strong>${datasetName}</strong> berhasil disimpan ke database (${saved.menu_sales.length} menu).`, 'success');
+            }
+        } catch(err) {
+            alert('Gagal menyimpan dataset: ' + err.message);
+        }
+    }
+
+    // ==============================================================
+    // IN-APP TABLE EDITOR (LIHAT / EDIT DATA DATASET)
+    // ==============================================================
+
+    function openModalEditDataset(periode) {
+        const ds = GindacoDB.getMonthlyDataset(periode);
+        if (!ds) {
+            alert('Dataset untuk ' + periode + ' tidak ditemukan!');
+            return;
+        }
+
+        currentEditingPeriode = periode;
+        currentEditingItems = JSON.parse(JSON.stringify(ds.menu_sales || []));
+
+        document.getElementById('modalEditPeriodeTitle').innerText = periode;
+        document.getElementById('editMenuSearchInput').value = '';
+        document.getElementById('addMenuRowBox').classList.add('d-none');
+
+        // Populate dropdown menu in add form
+        const allMenus = GindacoDB.getMenus();
+        const selectMenu = document.getElementById('selectAddMenuId');
+        selectMenu.innerHTML = allMenus.map(m => `
+            <option value="${m.kode_menu}">${m.kode_menu} - ${m.nama_menu}</option>
+        `).join('');
+
+        renderEditItemsTable();
+
+        const modalEl = document.getElementById('modalEditDataset');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+    }
+
+    function renderEditItemsTable(searchTerm = '') {
+        const tbody = document.getElementById('editDatasetTableBody');
+        const cleanSearch = String(searchTerm).trim().toLowerCase();
+
+        const filtered = currentEditingItems.map((item, idx) => ({ ...item, originalIdx: idx })).filter(it => {
+            if (!cleanSearch) return true;
+            return String(it.code).toLowerCase().includes(cleanSearch) || String(it.name).toLowerCase().includes(cleanSearch);
+        });
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">Tidak ada menu penjualan yang cocok dengan pencarian.</td></tr>`;
+        } else {
+            tbody.innerHTML = filtered.map((it, displayIdx) => `
+                <tr>
+                    <td class="text-muted fw-semibold">${displayIdx + 1}</td>
+                    <td><span class="badge bg-light text-dark border font-monospace">${it.code}</span></td>
+                    <td class="fw-semibold text-dark">${it.name}</td>
+                    <td class="text-end">
+                        <input type="number" min="0" step="1" class="form-control form-control-sm text-end font-monospace fw-bold ms-auto" style="width: 130px;" value="${it.qty}" oninput="updateEditingItemQty(${it.originalIdx}, this.value)">
+                    </td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteEditingItemRow(${it.originalIdx})" title="Hapus menu ini">
+                            <i class="fas fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        const totalQty = currentEditingItems.reduce((acc, it) => acc + (parseFloat(it.qty) || 0), 0);
+        document.getElementById('editDatasetStatsText').innerText = `Total ${currentEditingItems.length} item menu terdaftar.`;
+        document.getElementById('editDatasetTotalQty').innerText = `Total Qty: ${totalQty.toLocaleString('id-ID')} unit`;
+    }
+
+    function filterEditTable(keyword) {
+        renderEditItemsTable(keyword);
+    }
+
+    function toggleAddMenuRowForm() {
+        const box = document.getElementById('addMenuRowBox');
+        box.classList.toggle('d-none');
+    }
+
+    function confirmAddMenuItem() {
+        const selectMenu = document.getElementById('selectAddMenuId');
+        const code = selectMenu.value;
+        const allMenus = GindacoDB.getMenus();
+        const found = allMenus.find(m => String(m.kode_menu) === String(code));
+        const name = found ? found.nama_menu : code;
+        const qtyVal = parseFloat(document.getElementById('inputAddMenuQty').value) || 0;
+
+        if (qtyVal <= 0) {
+            alert('Kuantitas menu harus lebih besar dari 0!');
+            return;
+        }
+
+        const existingIdx = currentEditingItems.findIndex(it => String(it.code) === String(code));
+        if (existingIdx !== -1) {
+            currentEditingItems[existingIdx].qty += qtyVal;
+        } else {
+            currentEditingItems.push({
+                code: code,
+                name: name,
+                qty: qtyVal
+            });
+        }
+
+        toggleAddMenuRowForm();
+        renderEditItemsTable();
+    }
+
+    function updateEditingItemQty(originalIdx, newVal) {
+        const val = parseFloat(newVal) || 0;
+        if (currentEditingItems[originalIdx]) {
+            currentEditingItems[originalIdx].qty = val;
+            const totalQty = currentEditingItems.reduce((acc, it) => acc + (parseFloat(it.qty) || 0), 0);
+            document.getElementById('editDatasetTotalQty').innerText = `Total Qty: ${totalQty.toLocaleString('id-ID')} unit`;
+        }
+    }
+
+    function deleteEditingItemRow(originalIdx) {
+        if (confirm('Hapus item menu ini dari daftar penjualan?')) {
+            currentEditingItems.splice(originalIdx, 1);
+            renderEditItemsTable(document.getElementById('editMenuSearchInput').value);
+        }
+    }
+
+    function saveEditedDataset() {
+        if (!currentEditingPeriode) return;
+
+        try {
+            GindacoDB.updateMonthlyDatasetItems(currentEditingPeriode, currentEditingItems);
+
+            const modalEl = document.getElementById('modalEditDataset');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+
+            // SINKRONISASI REAKTIF: Jika dataset yang diedit sedang aktif di W1 atau W2, perbarui datanya seketika
+            let isRecalculated = false;
+            if (file1ParsedData && (file1ParsedData.datasetPeriode === currentEditingPeriode || file1ParsedData.label === currentEditingPeriode)) {
+                applySavedDataset(1, currentEditingPeriode, false);
+                isRecalculated = true;
+            }
+            if (file2ParsedData && (file2ParsedData.datasetPeriode === currentEditingPeriode || file2ParsedData.label === currentEditingPeriode)) {
+                applySavedDataset(2, currentEditingPeriode, false);
+                isRecalculated = true;
+            }
+
+            if (isRecalculated && file1ParsedData && file2ParsedData) {
+                processAndMergeDatasets();
+                showAppAlert(`<strong>Berhasil!</strong> Data penjualan <strong>${currentEditingPeriode}</strong> diperbarui. Weekly Forecast dan SPK telah dikalkulasi ulang secara realtime!`, 'success');
+            } else {
+                showAppAlert(`Perubahan pada dataset <strong>${currentEditingPeriode}</strong> berhasil disimpan ke database.`, 'success');
+            }
+
+            renderWeeklyDatasetsTable();
+            populateSavedDatasetDropdowns();
+        } catch(err) {
+            alert('Gagal menyimpan perubahan: ' + err.message);
+        }
+    }
+
+    function confirmDeleteWeeklyDataset(periode) {
+        const msg = `Apakah Anda yakin ingin menghapus dataset "${periode}" dari database?`;
+        if (confirm(msg)) {
+            GindacoDB.deleteMonthlyDataset(periode);
+
+            // Jika dataset yang dihapus sedang aktif di W1 atau W2
+            if (file1ParsedData && file1ParsedData.datasetPeriode === periode) {
+                file1ParsedData = null;
+                document.getElementById('statusFile1').innerText = 'Dataset terhapus (pilih baru)';
+            }
+            if (file2ParsedData && file2ParsedData.datasetPeriode === periode) {
+                file2ParsedData = null;
+                document.getElementById('statusFile2').innerText = 'Dataset terhapus (pilih baru)';
+            }
+
+            populateSavedDatasetDropdowns();
+            renderWeeklyDatasetsTable();
+
+            if (file1ParsedData && file2ParsedData) {
+                processAndMergeDatasets();
+            }
+
+            showAppAlert(`Dataset <strong>${periode}</strong> berhasil dihapus.`, 'warning');
+        }
+    }
+
+    function resetWeeklyDatasetsToDefault() {
+        if (confirm('Kembalikan dataset ke pengaturan baseline demo (Minggu Lalu, Minggu Sekarang, POS 26 Okt 2026)?')) {
+            localStorage.removeItem('gindaco_monthly_datasets');
+            GindacoDB.getMonthlyDatasets(); // auto-reseed
+            populateSavedDatasetDropdowns();
+            initDefaultWeeklyDatasets();
+            renderWeeklyDatasetsTable();
+            showAppAlert('Dataset penjualan telah direset ke baseline demo awal.', 'info');
+        }
+    }
     </script>
 </body>
 </html>
-

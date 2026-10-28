@@ -3,127 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - SPK Pengadaan Bahan Gindaco</title>
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <!-- Bootstrap 5.3 CSS -->
+    <title>Login - GINDACO SPK</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="assets/css/custom.css">
-    
     <style>
         body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #18181b 100%);
+            background: radial-gradient(circle at 15% 25%, #1e1b4b 0%, #0f172a 45%, #050505 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 24px 16px;
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
-        .login-card {
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        .auth-card {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 25px 60px -12px rgba(0,0,0,0.6);
             width: 100%;
-            max-width: 440px;
+            max-width: 420px;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.2);
         }
+        .auth-header {
+            background: linear-gradient(135deg, #c01b22 0%, #8c0f14 100%);
+            padding: 28px 24px 22px;
+            text-align: center;
+            color: #fff;
+        }
+        .auth-logo {
+            width: 64px; height: 64px;
+            margin: 0 auto 12px;
+            background: #fff;
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+            padding: 8px;
+        }
+        .auth-logo img { max-height: 100%; max-width: 100%; object-fit: contain; }
+        .form-control:focus, .form-select:focus {
+            border-color: #c01b22;
+            box-shadow: 0 0 0 3px rgba(192,27,34,0.15);
+        }
+        .btn-primary-gdc {
+            background: linear-gradient(135deg, #c01b22, #a1141a);
+            color: #fff; border: none;
+            padding: 11px; font-weight: 700; border-radius: 10px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(192,27,34,0.3);
+        }
+        .btn-primary-gdc:hover {
+            background: linear-gradient(135deg, #a1141a, #830e13);
+            color: #fff; transform: translateY(-1px);
+        }
+        .btn-primary-gdc:disabled { opacity: 0.7; transform: none; }
     </style>
 </head>
 <body>
-
-    <div class="login-card">
-        <div class="p-4 p-sm-5">
-            <!-- Header Brand -->
-            <div class="text-center mb-4">
-                <img src="assets/img/gindaco_logo.webp" alt="Gindaco Logo" style="height: 50px; width: auto; object-fit: contain;" class="mb-3">
-                <h4 class="fw-bold text-dark mb-1">GINDACO SPK</h4>
-                <p class="text-muted small mb-0">Mall Artha Gading &bull; Portal Pengadaan</p>
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">
+                <img src="assets/img/gindaco_logo.webp" alt="Gindaco Logo">
             </div>
+            <h5 class="fw-bold mb-0">GINDACO SPK</h5>
+            <p class="small text-white-50 mb-0 mt-1">Sistem Pendukung Keputusan Pengadaan</p>
+        </div>
 
+        <div class="p-4">
             <div id="alertBox"></div>
 
-            <!-- ONE CLICK QUICK DEMO LOGIN BUTTONS -->
-            <div class="mb-4 p-3 bg-light rounded-3 border">
-                <span class="text-muted small fw-bold d-block text-center text-uppercase mb-2">Akses Cepat Demo:</span>
-                <div class="d-grid gap-2">
-                    <button type="button" class="btn btn-outline-danger btn-sm fw-bold" onclick="quickLogin('manager')">
-                        <i class="fas fa-user-tie me-2"></i>Masuk sebagai Store Manager
-                    </button>
-                    <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="quickLogin('staff')">
-                        <i class="fas fa-user-gear me-2"></i>Masuk sebagai Staff Inventory
-                    </button>
-                </div>
-            </div>
-
-            <div class="position-relative text-center my-3">
-                <hr class="text-muted opacity-25">
-                <span class="position-absolute top-50 start-50 translate-middle bg-white px-2 small text-muted">atau via form NIK</span>
-            </div>
-
-            <!-- FORM LOGIN -->
-            <form id="loginForm" onsubmit="event.preventDefault(); submitLogin();">
+            <form id="loginForm" onsubmit="event.preventDefault(); submitLogin();" novalidate>
                 <div class="mb-3">
-                    <label class="form-label small fw-bold text-dark">Nomor Induk Karyawan (NIK)</label>
+                    <label class="form-label small fw-semibold text-dark">Username / NIK</label>
                     <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-id-badge"></i></span>
-                        <input type="text" id="inputNik" class="form-control border-start-0 font-monospace" placeholder="manager / staff" required>
+                        <span class="input-group-text bg-light text-muted border-end-0"><i class="fas fa-user fa-sm"></i></span>
+                        <input type="text" id="inputNik" class="form-control border-start-0"
+                               placeholder="Masukkan username atau NIK" autocomplete="username" required>
                     </div>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label small fw-bold text-dark">Password</label>
+                    <label class="form-label small fw-semibold text-dark">Password</label>
                     <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-lock"></i></span>
-                        <input type="password" id="inputPassword" class="form-control border-start-0" placeholder="password" required>
+                        <span class="input-group-text bg-light text-muted border-end-0"><i class="fas fa-lock fa-sm"></i></span>
+                        <input type="password" id="inputPassword"
+                               class="form-control border-start-0 border-end-0"
+                               placeholder="Masukkan password" autocomplete="current-password" required>
+                        <button class="btn btn-light border border-start-0 text-muted" type="button"
+                                onclick="togglePwd('inputPassword','toggleIcon')">
+                            <i class="fas fa-eye fa-sm" id="toggleIcon"></i>
+                        </button>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-gindaco w-100 py-2 fw-bold shadow-sm mb-3">
-                    <i class="fas fa-arrow-right-to-bracket me-1"></i> Masuk ke Sistem
+                <button type="submit" id="btnSubmitLogin" class="btn btn-primary-gdc w-100">
+                    <i class="fas fa-arrow-right-to-bracket me-2"></i>Masuk ke Sistem
                 </button>
             </form>
 
-            <div class="text-center pt-3 border-top">
-                <span class="text-muted small">Belum memiliki akun?</span>
-                <a href="register.html" class="small fw-bold text-danger text-decoration-none ms-1">Daftar Staff Baru</a>
+            <div class="text-center mt-3 pt-3 border-top">
+                <span class="text-muted small">Belum punya akun?</span>
+                <a href="register.html" class="small fw-bold text-danger text-decoration-none ms-1">Daftar di sini</a>
             </div>
         </div>
     </div>
 
-    <!-- App Seed & DB Engine -->
     <script src="assets/js/seed_data.js"></script>
     <script src="assets/js/db.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    function quickLogin(role) {
-        const users = GindacoDB.getUsers();
-        const user = users.find(u => u.level === role) || users[0];
-        GindacoDB.setCurrentUser(user);
-        window.location.href = 'index.html';
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const fromLogout = urlParams.get('logout') === '1';
+        if (!fromLogout && window.GindacoDB && window.GindacoDB.isLoggedIn()) {
+            window.location.replace('weekly_forecast.html');
+        }
+    });
+
+    function togglePwd(inputId, iconId) {
+        const el = document.getElementById(inputId);
+        const ic = document.getElementById(iconId);
+        const isPass = el.type === 'password';
+        el.type = isPass ? 'text' : 'password';
+        ic.className = isPass ? 'fas fa-eye-slash fa-sm' : 'fas fa-eye fa-sm';
+    }
+
+    function showAlert(message, type) {
+        document.getElementById('alertBox').innerHTML = `
+            <div class="alert alert-${type} py-2 px-3 small rounded-3 mb-3 alert-dismissible fade show">
+                <i class="fas ${type === 'danger' ? 'fa-triangle-exclamation' : 'fa-circle-check'} me-1"></i>
+                ${message}
+                <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
+            </div>`;
     }
 
     function submitLogin() {
-        const nik = document.getElementById('inputNik').value.trim();
+        const nik  = document.getElementById('inputNik').value.trim();
         const pass = document.getElementById('inputPassword').value;
+        if (!nik)  { showAlert('Username / NIK wajib diisi.', 'danger'); return; }
+        if (!pass) { showAlert('Password wajib diisi.', 'danger'); return; }
 
-        const res = GindacoDB.login(nik, pass);
-        if (res.success) {
-            window.location.href = 'index.html';
-        } else {
-            document.getElementById('alertBox').innerHTML = `
-                <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3">
-                    <i class="fas fa-circle-exclamation me-1"></i> ${res.message}
-                </div>
-            `;
-        }
+        const btn = document.getElementById('btnSubmitLogin');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memverifikasi...';
+
+        setTimeout(() => {
+            const res = window.GindacoDB.login(nik, pass);
+            if (res.success) {
+                window.location.replace('weekly_forecast.html');
+            } else {
+                showAlert(res.message, 'danger');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-arrow-right-to-bracket me-2"></i>Masuk ke Sistem';
+            }
+        }, 200);
     }
     </script>
 </body>
 </html>
-
